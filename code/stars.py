@@ -235,7 +235,7 @@ class PhysBubble(InstructionGroup):
 
     def on_update(self, dt):
         # integrate accel to get vel
-        self.vel += gravity * dt
+        self.vel += (0,-900) * dt
 
         # integrate vel to get pos
         self.pos += self.vel * dt
