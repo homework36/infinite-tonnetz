@@ -28,6 +28,9 @@ import numpy as np
 from OSCReader import OSCReader
 from random import randint
 from helper_function import *
+from tonnetz import *
+from audio_ctrl import *
+
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -35,106 +38,6 @@ there would be the error " OSError: [Errno 48] Address already in use"
 
 Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
-
-
-sq3 = np.sqrt(3)
-class StarLine(InstructionGroup):
-    '''Create lines that forms the tonnetz, passing the given point only! '''
-    def __init__(self, point, trans_type='p'):
-        super(StarLine, self).__init__()
-        self.type = trans_type.lower()
-        assert self.type in ['p','r','l']
-        self.cx, self.cy = point
-        self.end1, self.end2 = self.calc_line(self.type)
-        self.line = Line(points=(self.end1[0],self.end1[1],self.end2[0],self.end2[1]))
-        self.intersect = intersect
-
-        # if want to make line
-        self.add(self.line)
-    
-    def calc_line(self, trans_type):
-        width, height = Window.width, Window.height
-        
-        if self.type == 'p':
-            end1 = [0,self.cy]
-            end2 = [width,self.cy]
-            return end1, end2
-        else:
-            dist_top = (height-self.cy)/sq3
-            dist_bottom = self.cy/sq3
-            if self.type == 'r':
-                end_top = [self.cx-dist_top,height]
-                end_bottom = [self.cx+dist_bottom,0]
-            # self.type == 'l'
-            else:
-                end_top = [self.cx+dist_top,height]
-                end_bottom = [self.cx-dist_bottom,0]
-            return end_top, end_bottom
-            
-    def on_resize(self, win_size):
-        self.width, self.height = win_size
-        self.end1, self.end2 = self.calc_line(self.type)
-        self.line.points = self.ensd1[0],self.end1[1],self.end2[0],self.end2[1]
-
-    def on_update(self, dt):
-        pass
-
-    def check_cross(self, main_obj):
-        '''pos: current position of main object
-           last_pos: last position of main object'''
-        if self.intersect(main_obj.pos,main_obj.last_pos,self.end1,self.end2):
-            mode, triad, key = main_obj.mode, main_obj.triad, main_obj.key
-            new_mode, new_triad, new_key = make_trans(mode,triad,key,trans=self.type)
-            main_obj.mode =  new_mode
-            main_obj.triad = new_triad
-            main_obj.key = new_key
-        else:
-            pass
-
-# create tonnetz
-class Tonnetz(InstructionGroup):
-    def __init__(self, seg_length, origin=(10,10)):
-        '''create full tonnetz with a given seg_length and origin'''
-        super(Tonnetz, self).__init__()
-        self.width, self.height = Window.width, Window.height
-        self.seg = seg_length
-        self.seg_height = self.seg*sq3/2
-        self.origin = origin
-        self.make_lines()
-    
-    def make_lines(self):
-        self.line_list = []
-        num_rl = max(1,ceil(self.width/self.seg))
-        for i in range(int(num_rl+1)):
-            for trans in ['r','l']:
-                self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
-                self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
-    
-        num_p = max(1,ceil(self.height/self.seg_height))
-        for i in range(int(num_p+1)):
-            self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
-            self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
-            if i%2 == 0:
-                self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'l'))
-                self.line_list.append(StarLine((self.origin[0]+self.seg*num_rl,self.origin[1]+self.seg_height*i),'r'))
-                self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'l'))
-                self.line_list.append(StarLine((self.origin[0]+self.seg*num_rl,self.origin[1]-self.seg_height*i),'r'))
-        for line in self.line_list:
-            self.add(line)
-    
-    def on_resize(self, win_size):
-        # remove first
-        for line in self.children:
-            self.children.remove(line)
-        self.width, self.height = win_size
-        self.make_lines()
-
-    def on_boundary(self, new_origin):
-        self.origin = new_origin
-        self.make_lines()
-
-    def on_update(self,dt):
-        pass
 
 
 
@@ -162,49 +65,6 @@ class PhysBubble(InstructionGroup):
     def get_pos(self):
         return self.pos
 
-
-class AudioController(object):
-    def __init__(self, song_path):
-        super(AudioController, self).__init__()
-        self.audio = Audio(2)
-        self.mixer = Mixer()
-        self.synth = Synth()
-
-        # create TempoMap, AudioScheduler
-        self.tempo_map  = SimpleTempoMap(60)
-        self.sched = AudioScheduler(self.tempo_map)
-
-        # connect scheduler into audio system
-        self.audio.set_generator(self.sched)
-        self.sched.set_generator(self.mixer)
-
-        # value for init
-        self.bass = NoteGenerator(60, 0, 'sine')
-        self.third = NoteGenerator(60, 0, 'sine')
-        self.fifth = NoteGenerator(60, 0, 'sine')
-
-        # note parameters
-        self.root_pitch = 60
-        self.pitch = 60
-        self.mode = 1
-        self.vel = 80
-
-        self.keys = ['C','C#','D','Eb','E','F','F#',\
-                'G','Ab','A','Bb','B','C']
-        self.modes = [' minor',' major']
-        self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
-        self.pitchlists = [(0, 2, 3, 5, 7, 8, 11, 12),\
-            (0, 2, 4, 5, 7, 9, 11, 12)]
-
-    # start / stop the song
-    def toggle(self):
-        pass
-
-
-
-    # needed to update audio
-    def on_update(self):
-        self.audio.on_update()
 
 
 # testing widget
