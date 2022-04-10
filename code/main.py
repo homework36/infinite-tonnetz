@@ -31,13 +31,13 @@ from helper_function import *
 from tonnetz import *
 from audio_ctrl import *
 
+
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
 there would be the error " OSError: [Errno 48] Address already in use"
 
 Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
-
 
 
 
@@ -64,7 +64,6 @@ class PhysBubble(InstructionGroup):
 
     def get_pos(self):
         return self.pos
-
 
 
 
