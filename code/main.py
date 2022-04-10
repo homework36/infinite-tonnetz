@@ -3,7 +3,6 @@ from struct import calcsize
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
-from OSCReader import OSCReader
 from imslib.core import BaseWidget, run, lookup
 from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
 
@@ -16,9 +15,9 @@ from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
 
 from random import randint, random
 import numpy as np
-from random import randint
 # from pyrsistent import b
-
+from OSCReader import OSCReader
+from random import randint
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -195,8 +194,11 @@ class Tonnetz(InstructionGroup):
         self.seg = seg_length
         self.seg_height = self.seg*sq3/2
         self.origin = origin
-        num_rl = max(1,ceil(self.width/self.seg))
+        self.make_lines()
+    
+    def make_lines(self):
         self.line_list = []
+        num_rl = max(1,ceil(self.width/self.seg))
         for i in range(int(num_rl+1)):
             for trans in ['r','l']:
                 self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
@@ -211,9 +213,11 @@ class Tonnetz(InstructionGroup):
             self.add(line)
     
     def on_resize(self, win_size):
-        # self.width, self.height = win_size
-        for line in self.line_list:
-            line.on_resize(win_size) 
+        # remove first
+        for line in self.children:
+            self.children.remove(line)
+        self.width, self.height = win_size
+        self.make_lines()
 
     def on_update(self,dt):
         pass
@@ -287,13 +291,14 @@ class MainWidget(BaseWidget):
         self.info = topleft_label()
         self.add_widget(self.info)
 
-        # self.mainobj = None
+
         self.reader = OSCReader(ip, int(port))
         self.curr_pos = self.reader.get_pos()['gravity']
 
-        self.starship = PhysBubble((Window.width/2, Window.height/2), 20, (self.curr_pos['x'],self.curr_pos['y']))
+        self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50, (self.curr_pos['x'],self.curr_pos['y']))
         self.canvas.add(self.starship)
 
+        self.mainobj = None
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
         self.canvas.add(self.objects)
@@ -302,13 +307,9 @@ class MainWidget(BaseWidget):
         midpoint = (width/2,height/2)
         self.color = Color(1, 1, 1)
         self.canvas.add(self.color)
-        self.canvas.add(Tonnetz(100))
+        self.tonnetz = Tonnetz(150)
+        self.canvas.add(self.tonnetz)
 
-    # will get called when the window size changes. Pass this information down
-    # to Harp so that you appropriately resize it and its subcomponents.
-    def on_resize(self, win_size):
-        # update self.label
-        resize_topleft_label(self.info)
 
     def on_update(self):
         self.update_pos()
@@ -322,11 +323,16 @@ class MainWidget(BaseWidget):
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_pos()}'
 
+    def on_resize(self,win_size):
+        self.tonnetz.on_resize(win_size)
+        resize_topleft_label(self.info)
+
+
     def update_pos(self):
         self.last_pos = self.curr_pos
         self.curr_pos = self.reader.get_pos()['gravity']
+        # self.curr_z = self.curr_pos['z']        
 
-        # self.curr_z = self.curr_pos['z']
 
 if __name__ == "__main__":
     # pass in which MainWidget to run as a command-line arg
