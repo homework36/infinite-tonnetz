@@ -40,32 +40,47 @@ Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
 
 
+rescale_const = Window.width / 2
 
 class PhysBubble(InstructionGroup):
     def __init__(self, pos, r, vel, color=(1,1,1)):
         super(PhysBubble, self).__init__()
 
         self.radius = r
-        self.pos = np.array(pos, dtype=float)
+        # self.pos = np.array(pos, dtype=float)
         # self.vel = np.array((randint(-300, 300), 0), dtype=float)
-        self.vel = np.array(vel)
+        self.pos_x, self.pos_y = pos
+        self.vel_x, self.vel_y = 0, 0
         self.color = Color(rgb=color)
         self.add(self.color)
 
         self.circle = CEllipse(cpos=pos, csize=(2*r,2*r), segments = 40)
         self.add(self.circle)
 
-        # self.on_update(0)
+    # def set_pos(self, ax, ay):
+    #     self.pos[0] = (ax+1.)/2 * Window.width
+    #     self.pos[1] = (ay+1.)/2 * Window.height
+    #     self.circle.cpos = self.pos
 
-    def set_pos(self, ax, ay):
-        self.pos[0] = (ax+1.)/2 * Window.width
-        self.pos[1] = (ay+1.)/2 * Window.height
-        self.circle.cpos = self.pos
+    def set_accel(self, ax, ay):
+        self.ax = ax
+        self.ay = ay
 
     def get_pos(self):
-        return self.pos
+        return [self.pos_x, self.pos_y]
 
+    def on_update(self, dt):
+        # integrate accel to get vel
+        self.vel_x = self.ax * rescale_const
+        self.vel_y = self.ay * rescale_const
+        print(self.vel_x, self.vel_y)
 
+        # integrate vel to get pos
+        self.pos_x += self.vel_x * dt
+        self.pos_y += self.vel_y * dt
+
+        self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
+        return True
 
 # testing widget
 class MainWidget(BaseWidget):
@@ -81,13 +96,14 @@ class MainWidget(BaseWidget):
         self.curr_pos = self.reader.get_pos()['gravity']
 
         self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50, (self.curr_pos['x'],self.curr_pos['y']))
-        self.canvas.add(self.starship)
+        # self.canvas.add(self.starship)
 
         self.mainobj = None
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
         self.canvas.add(self.objects)
-        
+        self.objects.add(self.starship)
+
         # lines
         midpoint = (width/2,height/2)
         self.color = Color(1, 1, 1)
@@ -98,7 +114,7 @@ class MainWidget(BaseWidget):
 
     def on_update(self):
         self.update_pos()
-        self.starship.set_pos(self.curr_pos['x'], self.curr_pos['y'])
+        self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
 
         self.objects.on_update()
         self.info.text = f'{str(Window.mouse_pos)}\n'
