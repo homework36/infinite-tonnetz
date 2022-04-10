@@ -61,7 +61,7 @@ def make_trans(mode,triad,key,trans='p',print=False):
     '''mode: 1 if major, 0 if minor
        triad: a list of three notes forming a triad
        key: current key '''
-    trans_type = lower(trans)
+    trans_type = trans.lower()
     assert trans_type in ['p','r','l']
     assert len(triad) == 3
 
