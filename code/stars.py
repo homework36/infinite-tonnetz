@@ -187,8 +187,11 @@ class Tonnetz(InstructionGroup):
         self.seg = seg_length
         self.seg_height = self.seg*sq3/2
         self.origin = origin
-        num_rl = max(1,ceil(self.width/self.seg))
+        self.make_lines()
+    
+    def make_lines(self):
         self.line_list = []
+        num_rl = max(1,ceil(self.width/self.seg))
         for i in range(int(num_rl+1)):
             for trans in ['r','l']:
                 self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
@@ -203,9 +206,11 @@ class Tonnetz(InstructionGroup):
             self.add(line)
     
     def on_resize(self, win_size):
-        # self.width, self.height = win_size
-        for line in self.line_list:
-            line.on_resize(win_size) 
+        # remove first
+        for line in self.children:
+            self.children.remove(line)
+        self.width, self.height = win_size
+        self.make_lines()
 
     def on_update(self,dt):
         pass
@@ -263,13 +268,18 @@ class TestWidget(BaseWidget):
         midpoint = (width/2,height/2)
         self.color = Color(1, 1, 1)
         self.canvas.add(self.color)
-        self.canvas.add(Tonnetz(100))
+        self.tonnetz = Tonnetz(150)
+        self.canvas.add(self.tonnetz)
 
     def on_update(self):
       
         self.objects.on_update()
         self.info.text = f'{str(Window.mouse_pos)}\n'
         self.info.text += f'fps:{kivyClock.get_fps():.0f}\n'
+
+    def on_resize(self,win_size):
+        self.tonnetz.on_resize(win_size)
+
         
 
 if __name__ == "__main__":
