@@ -47,5 +47,5 @@ class OSCReader:
     except TimeoutException:
       print("Timeout. Please try again.")
     obj = json.loads(data)
-    print(obj)
+    # print(obj)
     return obj['sensordata']
