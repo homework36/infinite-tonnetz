@@ -48,7 +48,7 @@ class AudioController(object):
         self.root_pitch = 60
         self.pitch = 60
         self.mode = 1
-        self.vel = 80
+        self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,2), self.triad)
 
@@ -63,8 +63,12 @@ class AudioController(object):
         self.playing = False
 
     def make_prl(self, trans):
-        print('making trans')
-        self.mode,self.triad,self.pitch = make_trans(self.mode,self.triad,self.pitch,trans=trans)
+
+        print('making trans:',trans)
+        mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
+        self.mode,self.triad,self.pitch = mode, triad, key
+        self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
+        print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
 
     # start / stop the song
@@ -100,13 +104,15 @@ class chord_audio(object):
         self.triad = triad
         self.playing = False
         self.length = 480
-        self.vel = 80
+        self.vel = 40
 
         self.on_cmd = None
         self.off_cmd = []
 
     def set_triad(self, new_triad):
         self.triad = new_triad
+        # self.stop()
+        # self.start()
 
     def start(self):
         if self.playing:
