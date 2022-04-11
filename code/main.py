@@ -27,9 +27,9 @@ import numpy as np
 # from pyrsistent import b
 from OSCReader import OSCReader
 from random import randint
-from helper_function import *
-from tonnetz import *
-from audio_ctrl import *
+from tonnetz import Tonnetz
+from audio_ctrl import AudioController
+from player import Player
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -102,17 +102,14 @@ class MainWidget(BaseWidget):
         self.info = topleft_label()
         self.add_widget(self.info)
 
-
         self.reader = OSCReader(ip, int(port))
         self.curr_pos = self.reader.get_pos()['gravity']
 
-        # lines
-        midpoint = (width/2,height/2)
         self.color = Color(1, 1, 1)
         self.canvas.add(self.color)
-        self.tonnetz = Tonnetz(150,origin=(400,400))
+        self.tonnetz = Tonnetz(250)
         self.canvas.add(self.tonnetz)
-        
+
         self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50)
 
         # AnimGroup handles drawing, animation, and object lifetime management
@@ -120,18 +117,25 @@ class MainWidget(BaseWidget):
         self.canvas.add(self.objects)
         self.objects.add(self.starship)
 
+        self.audio_ctrl = AudioController()
+
+        self.player = Player(self.starship, self.tonnetz, self.audio_ctrl)
 
     def on_update(self):
+        self.player.on_update()
+        self.audio_ctrl.on_update()
+
         self.update_pos()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
-
         self.objects.on_update()
+
         self.info.text = f'{str(Window.mouse_pos)}\n'
         self.info.text += f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
-        self.info.text += f'position: {self.starship.get_curr_pos()}'
+        self.info.text += f'position: {self.starship.get_curr_pos()}\n'
+        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"}'
 
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
@@ -143,8 +147,8 @@ class MainWidget(BaseWidget):
         # self.curr_z = self.curr_pos['z']        
     
     def on_key_down(self, keycode, modifiers):
-        pass
-       
+        if keycode[1] == 'p':
+            self.audio_ctrl.toggle()       
 
 
 if __name__ == "__main__":

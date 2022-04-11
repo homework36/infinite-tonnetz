@@ -67,7 +67,7 @@ class StarLine(InstructionGroup):
     def on_resize(self, win_size):
         self.width, self.height = win_size
         self.end1, self.end2 = self.calc_line(self.type)
-        self.line.points = self.ensd1[0],self.end1[1],self.end2[0],self.end2[1]
+        self.line.points = self.end1[0],self.end1[1],self.end2[0],self.end2[1]
 
     def on_update(self, dt):
         pass
@@ -75,14 +75,11 @@ class StarLine(InstructionGroup):
     def check_cross(self, main_obj):
         '''pos: current position of main object
            last_pos: last position of main object'''
-        if self.intersect(main_obj.pos,main_obj.last_pos,self.end1,self.end2):
-            mode, triad, key = main_obj.mode, main_obj.triad, main_obj.key
-            new_mode, new_triad, new_key = make_trans(mode,triad,key,trans=self.type)
-            main_obj.mode =  new_mode
-            main_obj.triad = new_triad
-            main_obj.key = new_key
+        if self.intersect(main_obj.get_curr_pos(), main_obj.get_last_pos(),self.end1,self.end2):
+            print('crossing!')
+            return self.type
         else:
-            pass
+            return None
 
 # create tonnetz
 class Tonnetz(InstructionGroup):
@@ -128,4 +125,3 @@ class Tonnetz(InstructionGroup):
 
     def on_update(self,dt):
         pass
-
