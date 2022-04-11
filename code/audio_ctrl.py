@@ -48,7 +48,7 @@ class AudioController(object):
         self.root_pitch = 60
         self.pitch = 60
         self.mode = 1
-        self.vel = 80
+        self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,2), self.triad)
 
@@ -104,15 +104,15 @@ class chord_audio(object):
         self.triad = triad
         self.playing = False
         self.length = 480
-        self.vel = 80
+        self.vel = 40
 
         self.on_cmd = None
         self.off_cmd = []
 
     def set_triad(self, new_triad):
         self.triad = new_triad
-        self.stop()
-        self.start()
+        # self.stop()
+        # self.start()
 
     def start(self):
         if self.playing:
