@@ -12,7 +12,7 @@ from kivy.uix.label import Label
 from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
-
+from kivy.uix.image import Image
 
 from imslib.writer import AudioWriter
 from imslib.audio import Audio
@@ -27,10 +27,9 @@ import numpy as np
 # from pyrsistent import b
 from OSCReader import OSCReader
 from random import randint
-from helper_function import *
-from tonnetz import *
-from audio_ctrl import *
-
+from tonnetz import Tonnetz
+from audio_ctrl import AudioController
+from player import Player
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -39,33 +38,60 @@ there would be the error " OSError: [Errno 48] Address already in use"
 Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
 
-
-
+rescale_const = Window.width / 2
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, vel, color=(1,1,1)):
+    def __init__(self, pos, r, color=(1,1,1)):
         super(PhysBubble, self).__init__()
 
         self.radius = r
-        self.pos = np.array(pos, dtype=float)
-        # self.vel = np.array((randint(-300, 300), 0), dtype=float)
-        self.vel = np.array(vel)
+        self.pos_x, self.pos_y = pos
+        self.last_pos = pos
+        self.vel_x, self.vel_y = 0., 0.
+
         self.color = Color(rgb=color)
         self.add(self.color)
 
         self.circle = CEllipse(cpos=pos, csize=(2*r,2*r), segments = 40)
+        self.circle.texture = Image(source='../img/icon.png').texture
         self.add(self.circle)
 
-        # self.on_update(0)
+    def set_accel(self, ax, ay):
+        self.ax = ax
+        self.ay = ay
 
-    def set_pos(self, ax, ay):
-        self.pos[0] = (ax+1.)/2 * Window.width
-        self.pos[1] = (ay+1.)/2 * Window.height
-        self.circle.cpos = self.pos
+    def get_last_pos(self):
+        return self.last_pos
 
-    def get_pos(self):
-        return self.pos
+    def get_curr_pos(self):
+        return [self.pos_x, self.pos_y]
 
+    def on_resize(self, win_size):
+        self.circle.csize = (2 * win_size[0] // 50,2 * win_size[0] // 50)
 
+    def on_update(self, dt):
+        self.last_pos = [self.pos_x, self.pos_y]
+
+        # integrate accel to get vel
+        self.vel_x = self.ax * rescale_const
+        self.vel_y = self.ay * rescale_const
+
+        # integrate vel to get pos
+        if self.radius <= self.pos_x + self.vel_x * dt <= Window.width - self.radius:
+            self.pos_x += self.vel_x * dt
+        elif self.radius > self.pos_x + self.vel_x * dt:
+            self.pos_x = self.radius
+        else: # self.pos_x + self.vel_x * dt > Window.width - self.radius
+            self.pos_x = Window.width - self.radius
+        
+        if self.radius <= self.pos_y + self.vel_y * dt <= Window.height - self.radius:
+            self.pos_y += self.vel_y * dt
+        elif self.radius > self.pos_y + self.vel_y * dt:
+            self.pos_y = self.radius
+        else: # self.pos_y + self.vel_y * dt > Window.height - self.radius
+            self.pos_y = Window.height - self.radius
+
+        self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
+        return True
 
 # testing widget
 class MainWidget(BaseWidget):
@@ -76,55 +102,57 @@ class MainWidget(BaseWidget):
         self.info = topleft_label()
         self.add_widget(self.info)
 
-
         self.reader = OSCReader(ip, int(port))
         self.curr_pos = self.reader.get_pos()['gravity']
 
-        self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50, (self.curr_pos['x'],self.curr_pos['y']))
-        self.canvas.add(self.starship)
+        self.color = Color(1, 1, 1)
+        self.canvas.add(self.color)
+        self.tonnetz = Tonnetz(250)
+        self.canvas.add(self.tonnetz)
 
-        self.mainobj = None
+        self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50)
+
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
         self.canvas.add(self.objects)
-        
-        # lines
-        midpoint = (width/2,height/2)
-        self.color = Color(1, 1, 1)
-        self.canvas.add(self.color)
-        self.tonnetz = Tonnetz(150,origin=(400,400))
-        self.canvas.add(self.tonnetz)
+        self.objects.add(self.starship)
 
+        self.audio_ctrl = AudioController()
+
+        self.player = Player(self.starship, self.tonnetz, self.audio_ctrl)
 
     def on_update(self):
-        self.update_pos()
-        self.starship.set_pos(self.curr_pos['x'], self.curr_pos['y'])
+        self.player.on_update()
+        self.audio_ctrl.on_update()
 
+        self.update_pos()
+        self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         self.objects.on_update()
+
         self.info.text = f'{str(Window.mouse_pos)}\n'
         self.info.text += f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
-        self.info.text += f'position: {self.starship.get_pos()}'
+        self.info.text += f'position: {self.starship.get_curr_pos()}\n'
+        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"}'
 
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
         resize_topleft_label(self.info)
-
+        self.starship.on_resize(win_size)
 
     def update_pos(self):
-        self.last_pos = self.curr_pos
         self.curr_pos = self.reader.get_pos()['gravity']
         # self.curr_z = self.curr_pos['z']        
     
     def on_key_down(self, keycode, modifiers):
-        pass
-       
+        if keycode[1] == 'p':
+            self.audio_ctrl.toggle()       
 
 
 if __name__ == "__main__":
     # pass in which MainWidget to run as a command-line arg
-    assert len(sys.argv) == 3, 'Need arguments ip and port'
+    assert len(sys.argv) >= 3, 'Need arguments ip and port'
     assert sys.argv[2].isdigit() and int(sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
     run(MainWidget(sys.argv[1], sys.argv[2]))
