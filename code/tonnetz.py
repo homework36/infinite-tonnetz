@@ -75,10 +75,9 @@ class StarLine(InstructionGroup):
     def check_cross(self, main_obj):
         '''pos: current position of main object
            last_pos: last position of main object'''
-        curpos, lastpos = main_obj.get_curr_pos(), main_obj.get_last_pos()
-        if self.intersect(curpos, lastpos,self.end1,self.end2):
+        if self.intersect(main_obj.get_curr_pos(), main_obj.get_last_pos(),self.end1,self.end2):
             print('crossing!')
-            return self.types
+            return self.type
         else:
             return None
 
@@ -116,6 +115,7 @@ class Tonnetz(InstructionGroup):
             self.add(line)
         print('total num of lines:',len(self.line_list))
     
+    
     def on_resize(self, win_size):
         # remove first
         for line in self.children:
@@ -129,4 +129,3 @@ class Tonnetz(InstructionGroup):
 
     def on_update(self,dt):
         pass
-
