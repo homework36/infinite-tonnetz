@@ -75,9 +75,10 @@ class StarLine(InstructionGroup):
     def check_cross(self, main_obj):
         '''pos: current position of main object
            last_pos: last position of main object'''
-        if self.intersect(main_obj.get_curr_pos(), main_obj.get_last_pos(),self.end1,self.end2):
+        curpos, lastpos = main_obj.get_curr_pos(), main_obj.get_last_pos()
+        if self.intersect(curpos, lastpos,self.end1,self.end2):
             print('crossing!')
-            return self.type
+            return self.types
         else:
             return None
 
@@ -94,23 +95,26 @@ class Tonnetz(InstructionGroup):
     
     def make_lines(self):
         self.line_list = []
-        num_rl = max(1,ceil(self.width/self.seg))
-        for i in range(int(num_rl+1)):
-            for trans in ['r','l']:
+        num_rl_p = ceil((self.width-self.origin[0])/self.seg)
+        num_rl_m = ceil(self.origin[0]/self.seg)
+        for trans in ['r','l']:
+            for i in range(int(num_rl_p)):
                 self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
+            for i in range(int(num_rl_m)):
                 self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
     
         num_p = max(1,ceil(self.height/self.seg_height))
-        for i in range(int(num_p+1)):
+        for i in range(int(num_p)):
             self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
             self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
-            if i%2 == 0:
-                self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'l'))
-                self.line_list.append(StarLine((self.origin[0]+self.seg*num_rl,self.origin[1]+self.seg_height*i),'r'))
-                self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'l'))
-                self.line_list.append(StarLine((self.origin[0]+self.seg*num_rl,self.origin[1]-self.seg_height*i),'r'))
+        num_rl_leftright = ceil(self.height/sq3/self.seg)
+        for i in range(num_rl_leftright):
+            self.line_list.append(StarLine((self.origin[0]-(i+num_rl_m)*self.seg,self.origin[1]),'l'))
+            self.line_list.append(StarLine((self.origin[0]+(i+num_rl_p)*self.seg,self.origin[1]),'r'))
+
         for line in self.line_list:
             self.add(line)
+        print('total num of lines:',len(self.line_list))
     
     def on_resize(self, win_size):
         # remove first
@@ -125,3 +129,4 @@ class Tonnetz(InstructionGroup):
 
     def on_update(self,dt):
         pass
+
