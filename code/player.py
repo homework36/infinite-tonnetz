@@ -38,5 +38,5 @@ class Player(object):
             if if_trans is None:
                 pass
             else:
-                print('trans:',if_trans)
+                # print('trans:',if_trans)
                 self.audio_ctrl.make_prl(if_trans)

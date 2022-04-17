@@ -11,6 +11,10 @@ def bound_triad(notes):
             notes[i] -= 12
     return notes 
             
+# make triad into open chords
+def open_triad(notes):
+    return np.array([notes[0]%12+36,notes[1]%12+48,notes[2]%12+60]) 
+            
 
 # calculate if two lines intersect
 def ccw(A,B,C):
@@ -99,4 +103,4 @@ def make_trans(mode,triad,key,trans='p',print=False):
         print('pitch triad:',calc_triad)
     assert np.array_equal(triad % 12, calc_triad % 12)
 
-    return mode, bound_triad(triad), key
+    return mode, open_triad(triad), key

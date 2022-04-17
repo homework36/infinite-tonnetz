@@ -2,6 +2,7 @@ import argparse
 import socket
 from socket import timeout as TimeoutException
 import json
+import time
 
 '''
 This class reads the OSC information sent from phone in JSON format.
@@ -39,6 +40,8 @@ class OSCReader:
     self.sock = socket.socket(socket.AF_INET, # Internet
                          socket.SOCK_DGRAM) # UDP
 
+    # self.sock.setblocking(0)
+
     self.sock.bind((ip, port))
 
   def get_pos(self):
@@ -47,5 +50,12 @@ class OSCReader:
     except TimeoutException:
       print("Timeout. Please try again.")
     obj = json.loads(data)
+    # print('json data:')
+    # print(data)
+    # time.sleep(1)
     # print(obj)
     return obj['sensordata']
+
+# removing the waiting time
+# if not receving, update only with the latest info
+# while receiving, set blocking, if error then skip, then use last one, check if the queue is first in first out
