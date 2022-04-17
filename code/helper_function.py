@@ -93,14 +93,14 @@ def make_trans(mode,triad,key,trans='p',print=False):
     temp = (triad - key)%12
     triad = np.array([x for _, x in sorted(zip(temp, triad))])
 
-    # check if calculation is correct
-    if mode == 1:
-        calc_triad = key + np.array([0,4,7])
-    else:
-        calc_triad = key + np.array([0,3,7])
-    if print:
-        print('sorted triad:',triad)
-        print('pitch triad:',calc_triad)
-    assert np.array_equal(triad % 12, calc_triad % 12)
+    # check if calculation is correct, removed for optimization
+    # if mode == 1:
+    #     calc_triad = key + np.array([0,4,7])
+    # else:
+    #     calc_triad = key + np.array([0,3,7])
+    # if print:
+    #     print('sorted triad:',triad)
+    #     print('pitch triad:',calc_triad)
+    # assert np.array_equal(triad % 12, calc_triad % 12)
 
     return mode, open_triad(triad), key

@@ -113,7 +113,7 @@ class Tonnetz(InstructionGroup):
 
         for line in self.line_list:
             self.add(line)
-        print('total num of lines:',len(self.line_list))
+        # print('total num of lines:',len(self.line_list))
     
     
     def on_resize(self, win_size):
