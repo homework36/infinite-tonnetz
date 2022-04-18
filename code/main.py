@@ -143,7 +143,9 @@ class MainWidget(BaseWidget):
         self.starship.on_resize(win_size)
 
     def update_pos(self):
-        self.curr_pos = self.reader.get_pos()['gravity']
+        response = self.reader.get_pos()
+        if response:
+            self.curr_pos = response['gravity']
         # self.curr_z = self.curr_pos['z']        
     
     def on_key_down(self, keycode, modifiers):
