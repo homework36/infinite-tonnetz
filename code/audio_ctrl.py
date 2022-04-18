@@ -28,16 +28,17 @@ import numpy as np
 from OSCReader import OSCReader
 from random import randint
 from helper_function import *
+import pedalboard
 
 
 class AudioController(object):
     def __init__(self):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
-        self.synth = Synth()
+        self.synth = SynthEffect(effect=pedalboard.Reverb(room_size=0.75, wet_level=0.5))
 
         # create TempoMap, AudioScheduler
-        self.tempo_map  = SimpleTempoMap(60)
+        self.tempo_map  = SimpleTempoMap(40)
         self.sched = AudioScheduler(self.tempo_map)
 
         # connect scheduler into audio system
@@ -50,7 +51,8 @@ class AudioController(object):
         self.mode = 1
         self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
-        self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,2), self.triad)
+        self.triad = open_triad(self.triad)
+        self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,49), self.triad)
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -169,3 +171,42 @@ class chord_audio(object):
     def _note_off(self, tick, pitch):
         # terminate current note:
         self.synth.noteoff(self.channel, pitch)
+
+
+class SynthEffect(Synth):
+    def __init__(self, filepath = None, gain = 0.8, effect = None):
+        """Generator that creates sounds from a FluidSynth synthesizer bank.
+
+        :param filepath: Path to the file containing the synthesizer bank. If ``None``, Synth will load a locally cahced FluidR3_GM.sf2 file. If uncached, Synth will download FluidR3_GMsf2.
+        :param gain: The gain, a float between 0 and 1.
+        """
+
+        super(Synth, self).__init__(gain, samplerate=Audio.sample_rate)
+        if filepath is None:
+            filepath = self._get_cached_fluidbank()
+        self.sfid = self.sfload(filepath)
+        if self.sfid == -1:
+            raise Exception('Error in fluidsynth.sfload(): cannot open ' + filepath)
+        self.program(0, 0, 0)
+        self.effect = effect
+        self.sr = Audio.sample_rate
+    
+    def generate(self, num_frames, num_channels):
+        """
+        Generates and returns frames. Should be called every frame.
+
+        :param num_frames: An integer number of frames to generate.
+        :param num_channels: Number of channels. Can be 1 (mono) or 2 (stereo)
+
+        :returns: A tuple ``(output, True)``. The output is a numpy array of length
+            **(num_frames * num_channels)**
+        """
+
+        assert(num_channels == 2)
+        # get_samples() returns interleaved stereo, so all we have to do is scale
+        # the data to [-1, 1].
+        samples = self.get_samples(num_frames).astype(np.float32)
+        samples *= (1.0/32768.0)
+        if self.effect is not None:
+            samples = self.effect(samples, sample_rate=self.sr)
+        return (samples, True)
