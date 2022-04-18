@@ -6,10 +6,8 @@ import json
 '''
 This class reads the OSC information sent from phone in JSON format.
 Doc: https://www.notion.so/Send-OSC-from-phone-to-PC-55ec4f7e780e49d68cd78e8dade89ea5
-
 Author: Lu Yu
 Created date: 04/03/2022
-
 Data format:
 {
    "device":{
@@ -29,7 +27,6 @@ Data format:
       },
       # other metrics
    }
-
 '''
 
 class OSCReader:
@@ -49,4 +46,5 @@ class OSCReader:
       # print("Timeout. Please try again.")
       return
     obj = json.loads(data)
+    # print(obj)
     return obj['sensordata']

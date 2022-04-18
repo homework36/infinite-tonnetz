@@ -99,11 +99,12 @@ class Tonnetz(InstructionGroup):
         for trans in ['r','l']:
             for i in range(int(num_rl_p)):
                 self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
-            for i in range(int(num_rl_m)):
+            for i in range(1,int(num_rl_m)):
                 self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
     
         num_p = max(1,ceil(self.height/self.seg_height))
-        for i in range(int(num_p)):
+        self.line_list.append(StarLine((self.origin[0],self.origin[1]),'p'))
+        for i in range(1,int(num_p)):
             self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
             self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
         num_rl_leftright = ceil(self.height/sq3/self.seg)
@@ -113,7 +114,8 @@ class Tonnetz(InstructionGroup):
 
         for line in self.line_list:
             self.add(line)
-        print('total num of lines:',len(self.line_list))
+        #     print('line',line.type, 'at',line.cx,line.cy)
+        # print('num lines',len(self.line_list))
     
     
     def on_resize(self, win_size):
