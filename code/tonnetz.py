@@ -83,7 +83,7 @@ class StarLine(InstructionGroup):
 
 # create tonnetz
 class Tonnetz(InstructionGroup):
-    def __init__(self, seg_length, origin=(10,10)):
+    def __init__(self, seg_length, origin=[10,10]):
         '''create full tonnetz with a given seg_length and origin'''
         super(Tonnetz, self).__init__()
         self.width, self.height = Window.width, Window.height
@@ -125,13 +125,16 @@ class Tonnetz(InstructionGroup):
         self.width, self.height = win_size
         self.make_lines()
 
-    def on_boundary(self, new_origin):
-        print('here')
+    def on_boundary(self, dx, dy):
+        # print('here', dx, dy)
         # remove first
         for line in self.children:
             self.children.remove(line)
-        # self.origin = new_origin
-        # self.make_lines()
+        if dx:
+            self.origin[0] += dx
+        if dy:
+            self.origin[1] += dy
+        self.make_lines()
 
     def on_update(self,dt):
         pass

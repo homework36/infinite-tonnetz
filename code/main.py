@@ -82,24 +82,24 @@ class PhysBubble(InstructionGroup):
         elif self.radius > self.pos_x + self.vel_x * dt:
             self.pos_x = self.radius
             if self.callback:
-                self.callback([self.pos_x, self.pos_y])
+                self.callback(self.vel_x * dt, None)
 
         else: # self.pos_x + self.vel_x * dt > Window.width - self.radius
             self.pos_x = Window.width - self.radius
             if self.callback:
-                self.callback([self.pos_x, self.pos_y])
+                self.callback(self.vel_x * dt, None)
 
         if self.radius <= self.pos_y + self.vel_y * dt <= Window.height - self.radius:
             self.pos_y += self.vel_y * dt
         elif self.radius > self.pos_y + self.vel_y * dt:
             self.pos_y = self.radius
             if self.callback:
-                self.callback([self.pos_x, self.pos_y])
+                self.callback(None, self.vel_y * dt)
 
         else: # self.pos_y + self.vel_y * dt > Window.height - self.radius
             self.pos_y = Window.height - self.radius
             if self.callback:
-                self.callback([self.pos_x, self.pos_y])
+                self.callback(None, self.vel_y * dt)
 
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
         return True
