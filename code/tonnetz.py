@@ -124,8 +124,12 @@ class Tonnetz(InstructionGroup):
         self.make_lines()
 
     def on_boundary(self, new_origin):
-        self.origin = new_origin
-        self.make_lines()
+        print('here')
+        # remove first
+        for line in self.children:
+            self.children.remove(line)
+        # self.origin = new_origin
+        # self.make_lines()
 
     def on_update(self,dt):
         pass
