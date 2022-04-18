@@ -48,6 +48,11 @@ class PhysBubble(InstructionGroup):
         self.last_pos = pos
         self.vel_x, self.vel_y = 0., 0.
 
+        self.add(PushMatrix())
+        # self.add(Translate(*pos))
+        self.angle = 60/(1+np.random.randint(10))
+        self.add(Rotate(angle=self.angle))
+
         self.color = Color(rgb=color)
         self.add(self.color)
 
@@ -55,6 +60,10 @@ class PhysBubble(InstructionGroup):
         self.circle.texture = Image(source='../img/icon.png').texture
         self.add(self.circle)
         self.callback = callback
+
+        self.add(PopMatrix())
+        self.circle.cpos = pos
+
 
     def set_accel(self, ax, ay):
         self.ax = ax
@@ -70,6 +79,10 @@ class PhysBubble(InstructionGroup):
         self.circle.csize = (2 * win_size[0] // 50,2 * win_size[0] // 50)
 
     def on_update(self, dt):
+        self.add(PushMatrix())
+        # self.add(Translate(*self.last_pos))
+        self.add(Rotate(angle=self.angle))
+
         self.last_pos = [self.pos_x, self.pos_y]
 
         # integrate accel to get vel
@@ -101,7 +114,11 @@ class PhysBubble(InstructionGroup):
             if self.callback:
                 self.callback(None, self.vel_y * dt)
 
+
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
+
+        self.add(PopMatrix())
+
         return True
 
 # testing widget
