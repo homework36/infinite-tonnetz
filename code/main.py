@@ -40,7 +40,7 @@ Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 
 rescale_const = Window.width / 2
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1,1,1)):
+    def __init__(self, pos, r, color=(1,1,1), callback=None):
         super(PhysBubble, self).__init__()
 
         self.radius = r
@@ -54,6 +54,7 @@ class PhysBubble(InstructionGroup):
         self.circle = CEllipse(cpos=pos, csize=(2*r,2*r), segments = 40)
         self.circle.texture = Image(source='../img/icon.png').texture
         self.add(self.circle)
+        self.callback = callback
 
     def set_accel(self, ax, ay):
         self.ax = ax
@@ -80,15 +81,25 @@ class PhysBubble(InstructionGroup):
             self.pos_x += self.vel_x * dt
         elif self.radius > self.pos_x + self.vel_x * dt:
             self.pos_x = self.radius
+            if self.callback:
+                self.callback(self.vel_x * dt, None)
+
         else: # self.pos_x + self.vel_x * dt > Window.width - self.radius
             self.pos_x = Window.width - self.radius
-        
+            if self.callback:
+                self.callback(self.vel_x * dt, None)
+
         if self.radius <= self.pos_y + self.vel_y * dt <= Window.height - self.radius:
             self.pos_y += self.vel_y * dt
         elif self.radius > self.pos_y + self.vel_y * dt:
             self.pos_y = self.radius
+            if self.callback:
+                self.callback(None, self.vel_y * dt)
+
         else: # self.pos_y + self.vel_y * dt > Window.height - self.radius
             self.pos_y = Window.height - self.radius
+            if self.callback:
+                self.callback(None, self.vel_y * dt)
 
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
         return True
@@ -110,7 +121,10 @@ class MainWidget(BaseWidget):
         self.tonnetz = Tonnetz(400)
         self.canvas.add(self.tonnetz)
 
-        self.starship = PhysBubble((Window.width/2, Window.height/2), Window.width/50)
+        self.starship = PhysBubble(pos=(Window.width/2, Window.height/2), 
+                                   r=Window.width/50, 
+                                   color=(1,1,1),
+                                   callback=self.tonnetz.on_boundary)
 
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
@@ -135,7 +149,7 @@ class MainWidget(BaseWidget):
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"}'
+        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)'
 
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
@@ -143,7 +157,9 @@ class MainWidget(BaseWidget):
         self.starship.on_resize(win_size)
 
     def update_pos(self):
-        self.curr_pos = self.reader.get_pos()['gravity']
+        response = self.reader.get_pos()
+        if response:
+            self.curr_pos = response['gravity']
         # self.curr_z = self.curr_pos['z']        
     
     def on_key_down(self, keycode, modifiers):
