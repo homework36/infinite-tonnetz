@@ -28,14 +28,14 @@ import numpy as np
 from OSCReader import OSCReader
 from random import randint
 from helper_function import *
-import pedalboard
+from pedalboard import Pedalboard, Reverb
 
 
 class AudioController(object):
     def __init__(self):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
-        self.synth = SynthEffect(effect=pedalboard.Reverb(room_size=0.75, wet_level=0.5))
+        self.synth = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
 
         # create TempoMap, AudioScheduler
         self.tempo_map  = SimpleTempoMap(40)
