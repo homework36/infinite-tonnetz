@@ -96,34 +96,89 @@ class Tonnetz(InstructionGroup):
         self.seg = seg_length
         self.seg_height = self.seg*sq3/2
         self.origin = origin
-        self.make_lines()
-    
-    def make_lines(self):
+        self.line_list_p = []
+        self.line_list_rl = []
         self.line_list = []
+        self.make_lines()
+
+    def make_lines(self, p=True, rl=True):
+        if p:
+            
+            self.make_lines_p()
+            
+        if rl:
+            
+            self.make_lines_rl()
+            
+        self.line_list = self.line_list_p + self.line_list_rl
+
+    # older version ###############3
+    # def make_lines(self):
+    #     print(self.origin)
+    #     self.line_list = []
+    #     num_rl_p = ceil((self.width-self.origin[0])/self.seg)*2
+    #     num_rl_m = ceil(self.origin[0]/self.seg)*2
+
+    #     for trans in ['r','l']:
+    #         for i in range(int(num_rl_p)):
+    #             self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
+    #         for i in range(1,int(num_rl_m)):
+    #             self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
+    
+    #     num_p = max(1,ceil(self.height/self.seg_height))*2
+    #     self.line_list.append(StarLine((self.origin[0],self.origin[1]),'p'))
+    #     for i in range(1,int(num_p)):
+    #         self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
+    #         self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
+    #     num_rl_leftright = ceil(self.height/sq3/self.seg)*2
+    #     for i in range(num_rl_leftright):
+    #         self.line_list.append(StarLine((self.origin[0]-(i+num_rl_m)*self.seg,self.origin[1]),'l'))
+    #         self.line_list.append(StarLine((self.origin[0]+(i+num_rl_p)*self.seg,self.origin[1]),'r'))
+
+    #     for line in self.line_list:
+    #         self.add(line)
+    #     #     print('line',line.type, 'at',line.cx,line.cy)
+    #     # print('num lines',len(self.line_list))
+
+    def make_lines_p(self):
+        print('make lines p',self.origin)
+        for line in self.line_list_p:
+                if line in self.children:
+                    self.children.remove(line)
+
+        self.line_list_p = []
+        num_p = max(1,ceil(self.height/self.seg_height))*2
+        self.line_list_p.append(StarLine((self.origin[0],self.origin[1]),'p'))
+        for i in range(1,int(num_p)):
+            self.line_list_p.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
+            self.line_list_p.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
+        for line in self.line_list_p:
+            self.add(line)
+    
+    def make_lines_rl(self):
+        print('make lines rl',self.origin)
+        for line in self.line_list_rl:
+                if line in self.children:
+                    self.children.remove(line)
+
+        self.line_list_rl = []
         num_rl_p = ceil((self.width-self.origin[0])/self.seg)*2
         num_rl_m = ceil(self.origin[0]/self.seg)*2
 
         for trans in ['r','l']:
             for i in range(int(num_rl_p)):
-                self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
+                self.line_list_rl.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
             for i in range(1,int(num_rl_m)):
-                self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
+                self.line_list_rl.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
     
-        num_p = max(1,ceil(self.height/self.seg_height))*2
-        self.line_list.append(StarLine((self.origin[0],self.origin[1]),'p'))
-        for i in range(1,int(num_p)):
-            self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
-            self.line_list.append(StarLine((self.origin[0],self.origin[1]-self.seg_height*i),'p'))
-        num_rl_leftright = ceil(self.height/sq3/self.seg)
+        num_rl_leftright = ceil(self.height/sq3/self.seg)*2
         for i in range(num_rl_leftright):
-            self.line_list.append(StarLine((self.origin[0]-(i+num_rl_m)*self.seg,self.origin[1]),'l'))
-            self.line_list.append(StarLine((self.origin[0]+(i+num_rl_p)*self.seg,self.origin[1]),'r'))
+            self.line_list_rl.append(StarLine((self.origin[0]-(i+num_rl_m)*self.seg,self.origin[1]),'l'))
+            self.line_list_rl.append(StarLine((self.origin[0]+(i+num_rl_p)*self.seg,self.origin[1]),'r'))
 
-        for line in self.line_list:
+        for line in self.line_list_rl:
             self.add(line)
-        #     print('line',line.type, 'at',line.cx,line.cy)
-        # print('num lines',len(self.line_list))
-    
+  
     
     def on_resize(self, win_size):
         # remove first
@@ -134,14 +189,28 @@ class Tonnetz(InstructionGroup):
 
     def on_boundary(self, dx, dy):
         # print('here', dx, dy)
-        # remove first
-        for line in self.children:
-            self.children.remove(line)
         if dx:
+            # for line in self.line_list_rl:
+            #     self.children.remove(line)
+
             self.origin[0] += dx
+            self.origin[0] %= self.seg * 2
+            self.make_lines()
+
+            # for line in self.line_list_rl:
+            #     self.add(line)
         if dy:
+            # for line in self.line_list_p:
+            #     self.children.remove(line)
+
             self.origin[1] += dy
-        self.make_lines()
+            self.origin[1] %= self.seg_height * 2
+            self.make_lines()
+
+            # for line in self.line_list_p:
+            #     self.add(line)
+            
+        
 
     def on_update(self,dt):
         pass

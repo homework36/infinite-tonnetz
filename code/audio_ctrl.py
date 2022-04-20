@@ -89,11 +89,11 @@ class AudioController(object):
 
     def make_prl(self, trans):
 
-        print('making trans:',trans)
+        # print('making trans:',trans)
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
-        print('after trans',self.key, self.triad, self.mode)
+        # print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
