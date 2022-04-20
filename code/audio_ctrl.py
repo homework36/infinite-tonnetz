@@ -69,14 +69,19 @@ class AudioController(object):
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         self.pitchlists = [(0, 2, 3, 5, 7, 8, 11, 12),\
             (0, 2, 4, 5, 7, 9, 11, 12)]
-        self.make_flashynotes()
-        self.arpeg = Arpeggiator(self.sched, self.synth, notes = self.flashynotes, channel = 1, program = (0,47) )    
+        self.make_notes()
+        self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, channel = 2, program = (0,47) )  
+        self.melody = Arpeggiator2(self.sched, self.synth, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
 
         self.playing = False
     
-    def make_flashynotes(self):
-        temp = self.pitchlists[self.mode] + self.triad[0] + 12 * 2
-        self.flashynotes = np.array([temp[i] for i in [0,2,3,4,3,2]])
+    def make_notes(self):
+        self.melodynotes = self.pitchlists[self.mode] + self.triad[0] 
+        self.flashynotes = np.array([self.melodynotes[i] for i in [0,2,3,4,3,2]]) + 12 * 2
+        
+
+    def melody_jump(self,num):
+        self.melody.set_jump(num)
         
     def change_flashyrhythm(self,length, articulation):
         self.arpeg.set_rhythm(length, articulation)
@@ -90,18 +95,21 @@ class AudioController(object):
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
-        self.make_flashynotes()
+        self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
+        self.melody.set_pitches(self.melodynotes+24)
 
     # start / stop the song
     def toggle(self):
         if self.chord_audio.playing:
             self.chord_audio.stop()
             self.arpeg.stop()
+            self.melody.stop()
             self.playing = False
         else:
             self.chord_audio.start()
             self.arpeg.start()
+            self.melody.start()
             self.playing = True
 
     # needed to update audio
@@ -279,7 +287,7 @@ class SynthEffect(Synth):
 
 
 class Arpeggiator(object):
-    def __init__(self, sched, synth, notes, channel=2, program=(0, 40), callback = None):
+    def __init__(self, sched, synth, notes, length = 240, channel=2, program=(0, 40)):
         super(Arpeggiator, self).__init__()
 
         self.playing = False
@@ -291,7 +299,7 @@ class Arpeggiator(object):
 
         
         self.notes = notes
-        self.length = 240
+        self.length = length
         self.articulation = 1
         self.playmode = self._up
         self.playmodename = 'up'
@@ -303,7 +311,10 @@ class Arpeggiator(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 40
+        self.vel = 30
+
+        self.lastpitch = None
+        self.jump = 0.5
     
     def change_channel_vol(self,in_num):
         if in_num == 1:
@@ -441,3 +452,143 @@ class Arpeggiator(object):
             return idx + 1
         else:
             return idx - 1
+    
+class Arpeggiator2(object):
+    def __init__(self, sched, synth, notes=None, length=480, channel=0, program=(0, 40)):
+        
+        super(Arpeggiator2, self).__init__()
+
+        self.playing = False
+        self.initind = True
+        self.sched = sched
+        self.synth = synth
+        self.channel = channel
+        self.program = program
+        self.width, self.height = Window.width, Window.height
+        
+        self.notes = notes
+        self.length = length
+        self.articulation = 1
+
+
+        self.on_cmd = None
+        self.off_cmd = None
+
+        self.oldlength = None
+        self.oldarticulation = None
+        self.vel = 25
+        self.lastpitch = None
+        self.jump = 0.5
+      
+        if self.notes is not None:
+            self.possible_notes = np.sort(np.concatenate((self.notes,self.notes+12,self.notes-12)))
+    
+
+    
+    def set_jump(self,in_num):
+        self.jump = in_num
+        if self.jump >= 2:
+            self.jump = 1.5
+        if self.jump <= 0:
+            self.jump = 0 
+        
+    
+    # pitches is a list of MIDI pitch values. For example [60 64 67 72]
+    def set_pitches(self, pitches):
+        self.notes = np.sort(np.array(pitches))
+        self.possible_notes = np.sort(np.concatenate((self.notes,self.notes+12,self.notes-12)))       
+    
+    def set_rhythm(self, length, articulation):
+        self.oldlength = self.length
+        self.oldarticulation = self.articulation
+        self.length = length
+        self.articulation = articulation
+
+
+    def _noteon(self,tick):
+        if len(self.notes) == 0:
+            return
+
+        pitch = self.nextpitch()
+        self.lastpitch = pitch   
+        self.synth.noteon(self.channel,pitch,self.vel) 
+
+        noteplay_original = self.length + tick
+        noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
+        
+        # schedule the next noteon
+        self.on_cmd = self.sched.post_at_tick(self._noteon, noteplay)
+        
+        
+        notestop = .95*(self.length*self.articulation) + tick
+        # schedule the noteoff
+        self.off_cmd = self.sched.post_at_tick(self._noteoff, notestop, pitch)
+
+    def nextpitch(self):
+        '''pitch selection process: will try to stay in the same pitch, and avoid moving too far,
+        unless self.jump is set to a larger value
+        when it's just launched, always pich the first in self.notes because that's the bass'''
+        if self.lastpitch:
+            ind = int(np.round(np.random.laplace(loc=self.ind,scale=self.jump)))
+            if ind < 0 or ind >= len(self.possible_notes):
+                return self.lastpitch
+            if abs(ind-self.ind)>=9:
+                return self.lastpitch
+            self.ind = ind
+            return self.possible_notes[self.ind]
+        else:
+            picknote = self.notes[0]
+            self.ind = np.where(self.possible_notes==picknote)[0][0]
+            return picknote
+
+    # want to remove this redundant part later
+    ################################################
+    def _noteoff(self,tick,pitch):
+        self.synth.noteoff(self.channel,pitch)
+
+    def start(self):
+        if self.notes is None:
+            return 
+        if self.playing:
+            return 
+        if len(self.notes) == 0:
+            return 
+        self.playing = True
+
+        self.synth.program(self.channel,self.program[0],self.program[1])
+        tick = self.sched.get_tick()
+
+        # start with organ
+        noteplay_original = self.length + tick
+        noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
+        self.on_cmd = self.sched.post_at_tick(self._noteon, noteplay)
+        
+    # stop the arpeggiator
+    def stop(self):
+        if self.notes is None:
+            return 
+        if not self.playing:
+            return
+
+        self.playing = False
+        if self.on_cmd:
+            self.sched.cancel(self.on_cmd)
+        if self.off_cmd:
+            self.sched.cancel(self.off_cmd)
+            self.off_cmd.execute() # cause note off to happen right now
+        
+        self.on_cmd = None
+        self.off_cmd = None
+    
+    def change_channel_vol(self,in_num):
+        if in_num == 1:
+            self.vel += 10
+        if in_num == -1:
+            self.vel -= 10
+        if self.vel >= 120:
+            self.vel = 120
+        if self.vel <= 80:
+            self.vel = 80
+    
+    ##############################end of redundant part
+
