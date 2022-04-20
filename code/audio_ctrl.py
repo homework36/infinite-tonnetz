@@ -21,6 +21,7 @@ from imslib.core import BaseWidget, run
 from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
 from imslib.leap import getLeapInfo, getLeapFrame
 from imslib.synth import Synth
+from imslib.mixer import Mixer
 
 from random import randint, random
 import numpy as np
@@ -37,8 +38,9 @@ class AudioController(object):
     def __init__(self):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
-        self.synth = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
-        # self.synth = Synth()
+        self.mixer = Mixer()
+        self.synth_bg = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
+        self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
 
 
         # create TempoMap, AudioScheduler
@@ -47,7 +49,9 @@ class AudioController(object):
 
         # connect scheduler into audio system
         self.audio.set_generator(self.sched)
-        self.sched.set_generator(self.synth)
+        self.sched.set_generator(self.mixer)
+        self.mixer.add(self.synth_bg)
+        self.mixer.add(self.synth)
 
         # note parameters
         self.root_pitch = 60
@@ -56,7 +60,7 @@ class AudioController(object):
         self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.triad = open_triad(self.triad)
-        self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,49), self.triad, loop=False)
+        self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -65,8 +69,18 @@ class AudioController(object):
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         self.pitchlists = [(0, 2, 3, 5, 7, 8, 11, 12),\
             (0, 2, 4, 5, 7, 9, 11, 12)]
+        self.make_flashynotes()
+        self.arpeg = Arpeggiator(self.sched, self.synth, notes = self.flashynotes, channel = 1, program = (0,47) )    
 
         self.playing = False
+    
+    def make_flashynotes(self):
+        temp = self.pitchlists[self.mode] + self.triad[0] + 12 * 2
+        self.flashynotes = np.array([temp[i] for i in [0,2,3,4,3,2]])
+        
+    def change_flashyrhythm(self,length, articulation):
+        self.arpeg.set_rhythm(length, articulation)
+
 
     def make_prl(self, trans):
 
@@ -76,14 +90,18 @@ class AudioController(object):
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
+        self.make_flashynotes()
+        self.arpeg.set_pitches(self.flashynotes)
 
     # start / stop the song
     def toggle(self):
         if self.chord_audio.playing:
             self.chord_audio.stop()
+            self.arpeg.stop()
             self.playing = False
         else:
             self.chord_audio.start()
+            self.arpeg.start()
             self.playing = True
 
     # needed to update audio
@@ -258,3 +276,168 @@ class SynthEffect(Synth):
         if self.effect is not None:
             samples = self.effect(samples, sample_rate=self.sr)
         return (samples, True)
+
+
+class Arpeggiator(object):
+    def __init__(self, sched, synth, notes, channel=2, program=(0, 40), callback = None):
+        super(Arpeggiator, self).__init__()
+
+        self.playing = False
+        self.initind = True
+        self.sched = sched
+        self.synth = synth
+        self.channel = channel
+        self.program = program
+
+        
+        self.notes = notes
+        self.length = 240
+        self.articulation = 1
+        self.playmode = self._up
+        self.playmodename = 'up'
+        self.goingup = True
+        self.ind = self.playmode(0)
+
+        self.on_cmd = None
+        self.off_cmd = None
+
+        self.oldlength = None
+        self.oldarticulation = None
+        self.vel = 40
+    
+    def change_channel_vol(self,in_num):
+        if in_num == 1:
+            self.vel += 10
+        if in_num == -1:
+            self.vel -= 10
+        if self.vel >= 120:
+            self.vel = 120
+        if self.vel <= 80:
+            self.vel = 80
+
+    # start the arpeggiator
+    def start(self):
+        if self.playing:
+            return 
+        if len(self.notes) == 0:
+            return 
+        self.playing = True
+
+        self.synth.program(self.channel,self.program[0],self.program[1])
+        tick = self.sched.get_tick()
+
+        # can start with synchopation
+        noteplay_original = self.length + tick
+        noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
+        self.on_cmd = self.sched.post_at_tick(self._noteon, noteplay)
+        
+
+    # stop the arpeggiator
+    def stop(self):
+        if not self.playing:
+            return
+
+        self.playing = False
+        if self.on_cmd:
+            self.sched.cancel(self.on_cmd)
+        if self.off_cmd:
+            self.sched.cancel(self.off_cmd)
+            self.off_cmd.execute() # cause note off to happen right now
+        
+        self.on_cmd = None
+        self.off_cmd = None
+        
+    
+    # pitches is a list of MIDI pitch values. For example [60 64 67 72]
+    def set_pitches(self, pitches):
+        self.notes = np.sort(np.array(pitches))
+        while self.ind >= len(self.notes):
+            self.ind = len(self.notes) - 1
+
+ 
+    def set_rhythm(self, length, articulation):
+
+        self.oldlength = self.length
+        self.oldarticulation = self.articulation
+        self.length = length
+        self.articulation = articulation
+        # self.start()
+    
+
+    # dir is either 'up', 'down', or 'updown'
+    def set_direction(self, direction):
+        if direction == 'updown':
+            self.playmode = self._updown
+        elif  direction == 'down':
+            self.playmode = self._down
+        else:
+            self.playmode = self._up
+
+    def _noteon(self,tick):
+        if len(self.notes) == 0:
+            return
+        
+        pitch = self.notes[self.ind]   
+        self.synth.noteon(self.channel,pitch,self.vel) 
+
+        noteplay_original = self.length + tick
+        noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
+        
+        # schedule the next noteon
+        self.on_cmd = self.sched.post_at_tick(self._noteon, noteplay)
+        
+        
+        notestop = .95*(self.length*self.articulation) + tick
+        # schedule the noteoff
+        self.off_cmd = self.sched.post_at_tick(self._noteoff, notestop, pitch)
+
+        # to next
+        self.ind = self.playmode(self.ind)
+    
+    def _noteoff(self,tick,pitch):
+        self.synth.noteoff(self.channel,pitch)
+
+    def _up(self,idx):
+        self.playmodename = 'up'
+        if self.initind:
+            self.initind = False
+            return 0
+        if len(self.notes) == 1:
+            return 0
+        if idx >= len(self.notes) - 1:
+            return 0
+        else:
+            return idx + 1
+    
+    def _down(self,idx):
+        self.playmodename = 'down'
+        if self.initind:
+            self.initind = False
+            assert len(self.notes) >= 1
+            return len(self.notes) - 1
+        if len(self.notes) == 1:
+            return 0
+        if idx == 0:
+            return len(self.notes) - 1
+        else:
+            return idx - 1
+    
+    def _updown(self,idx):
+        self.playmodename = 'updown'
+        if self.initind:
+            self.initind = False
+            assert len(self.notes) > 1
+            return 0
+        if len(self.notes) == 1:
+            return 0
+        if idx <= 0:
+            self.goingup = True
+            return 1
+        elif idx >= len(self.notes) - 1:
+            self.goingup = False
+            return len(self.notes) - 2
+
+        if self.goingup:
+            return idx + 1
+        else:
+            return idx - 1
