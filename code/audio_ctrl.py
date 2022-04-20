@@ -38,10 +38,11 @@ class AudioController(object):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.synth = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
+        # self.synth = Synth()
 
 
         # create TempoMap, AudioScheduler
-        self.tempo_map  = SimpleTempoMap(40)
+        self.tempo_map  = SimpleTempoMap(80)
         self.sched = AudioScheduler(self.tempo_map)
 
         # connect scheduler into audio system
@@ -55,7 +56,7 @@ class AudioController(object):
         self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.triad = open_triad(self.triad)
-        self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,49), self.triad)
+        self.chord_audio = chord_audio(self.sched, self.synth, 1, (0,49), self.triad, loop=False)
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -89,8 +90,9 @@ class AudioController(object):
     def on_update(self):
         self.audio.on_update()
 
+# no looping
 class chord_audio(object):
-    def __init__(self, sched, synth, channel, program, triad):
+    def __init__(self, sched, synth, channel, program, triad, loop=False):
         """
         :param sched: The Scheduler object. Should keep track of ticks and
             allow commands to be scheduled.
@@ -98,7 +100,7 @@ class chord_audio(object):
         :param channel: The channel to use for playing audio.
         :param program: A tuple (bank, preset). Allows an instrument to be specified.
         :param chord: The chord to play, a list of pitches.
-        :param loop: When True, restarts playback from the first note.
+        :param loop: whether to loop the chord
         """
         super(chord_audio, self).__init__()
         self.sched = sched
@@ -108,16 +110,60 @@ class chord_audio(object):
 
         self.triad = triad
         self.playing = False
-        self.length = 480
+        self.length = 480*5
         self.vel = 40
 
         self.on_cmd = None
         self.off_cmd = []
+        self.loop = loop
+
+
+    def toggle(self):
+        if self.playing:
+            self.stop()
+        else:
+            self.start()
+    
+    # simple version using continuous synth
+    ############################################
+
+    # def set_triad(self, new_triad):
+    #     self.stop()
+    #     self.triad = new_triad
+    #     self.start()
+
+    # def start(self):
+    #     if self.playing:
+    #         return
+
+    #     self.playing = True
+    #     self.synth.program(self.channel, self.program[0], self.program[1])
+
+    #     bass, third, fifth = self.triad
+    #     self.synth.noteon(self.channel, bass, self.vel)
+    #     self.synth.noteon(self.channel, third, self.vel)
+    #     self.synth.noteon(self.channel, fifth, self.vel)
+
+    # def stop(self):
+    #     if not self.playing:
+    #         return
+
+    #     self.playing = False
+    #     bass, third, fifth = self.triad
+    #     self.synth.noteoff(self.channel, bass)
+    #     self.synth.noteoff(self.channel, third)
+    #     self.synth.noteoff(self.channel, fifth)
+
+    
+    # 2nd version using reverb synth
+    ############################################
 
     def set_triad(self, new_triad):
         self.triad = new_triad
-        # self.stop()
-        # self.start()
+        if not self.loop:
+            self.stop()
+            self.start()
+
 
     def start(self):
         if self.playing:
@@ -146,13 +192,8 @@ class chord_audio(object):
                 cmd.execute() # cause note off to happen right now
         self.on_cmd = None
         self.off_cmd = []
-
-    def toggle(self):
-        if self.playing:
-            self.stop()
-        else:
-            self.start()
-
+        self.synth.noteoff(0, self.triad[0])
+    
     def _note_on(self, tick):
 
         self.off_cmd = []
@@ -164,17 +205,21 @@ class chord_audio(object):
         self.synth.noteon(2, fifth, self.vel)
 
         off_tick = tick + self.length * .95 # slightly detached 
-        for note in self.triad:
-            self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, note)) 
+        # self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
+        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, third)) 
+        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, fifth)) 
 
+        if self.loop:
         # schedule the next note:
-        self.on_cmd = self.sched.post_at_tick(self._note_on, tick + self.length)
+            self.on_cmd = self.sched.post_at_tick(self._note_on, tick + self.length)
 
 
     def _note_off(self, tick, pitch):
         # terminate current note:
         self.synth.noteoff(self.channel, pitch)
 
+
+        
 
 class SynthEffect(Synth):
     def __init__(self, filepath = None, gain = 0.8, effect = None):

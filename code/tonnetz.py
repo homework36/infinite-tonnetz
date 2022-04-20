@@ -45,6 +45,12 @@ class StarLine(InstructionGroup):
         # if want to make line
         self.add(self.line)
     
+    def update_line(self, px, py):
+        self.cx, self.cy = px, py
+        self.end1, self.end2 = self.calc_line(self.type)
+        self.line.points=(self.end1[0],self.end1[1],self.end2[0],self.end2[1])
+
+    
     def calc_line(self, trans_type):
         width, height = Window.width, Window.height
         
@@ -94,15 +100,16 @@ class Tonnetz(InstructionGroup):
     
     def make_lines(self):
         self.line_list = []
-        num_rl_p = ceil((self.width-self.origin[0])/self.seg)
-        num_rl_m = ceil(self.origin[0]/self.seg)
+        num_rl_p = ceil((self.width-self.origin[0])/self.seg)*2
+        num_rl_m = ceil(self.origin[0]/self.seg)*2
+
         for trans in ['r','l']:
             for i in range(int(num_rl_p)):
                 self.line_list.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),trans))
             for i in range(1,int(num_rl_m)):
                 self.line_list.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),trans))
     
-        num_p = max(1,ceil(self.height/self.seg_height))
+        num_p = max(1,ceil(self.height/self.seg_height))*2
         self.line_list.append(StarLine((self.origin[0],self.origin[1]),'p'))
         for i in range(1,int(num_p)):
             self.line_list.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),'p'))
