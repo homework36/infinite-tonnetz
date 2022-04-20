@@ -48,13 +48,21 @@ class PhysBubble(InstructionGroup):
         self.last_pos = pos
         self.vel_x, self.vel_y = 0., 0.
 
+        self.add(PushMatrix())
+        self.rotate = Rotate(angle=0)
+        self.add(self.rotate)
+
         self.color = Color(rgb=color)
         self.add(self.color)
 
         self.circle = CEllipse(cpos=pos, csize=(2*r,2*r), segments = 40)
-        self.circle.texture = Image(source='../img/icon.png').texture
         self.add(self.circle)
+
+        self.add(PopMatrix())
+
+        self.circle.texture = Image(source='../img/icon.png').texture
         self.callback = callback
+        self.last_angle = 0
 
     def set_accel(self, ax, ay):
         self.ax = ax
@@ -75,34 +83,64 @@ class PhysBubble(InstructionGroup):
         # integrate accel to get vel
         self.vel_x = self.ax * rescale_const
         self.vel_y = self.ay * rescale_const
+        self.dx = self.vel_x * dt
+        self.dy = self.vel_y * dt
 
         # integrate vel to get pos
-        if self.radius <= self.pos_x + self.vel_x * dt <= Window.width - self.radius:
-            self.pos_x += self.vel_x * dt
-        elif self.radius > self.pos_x + self.vel_x * dt:
+        if self.radius <= self.pos_x + self.dx <= Window.width - self.radius:
+            self.pos_x += self.dx
+        elif self.radius > self.pos_x + self.dx:
             self.pos_x = self.radius
             if self.callback:
-                self.callback(self.vel_x * dt, None)
+                self.callback(-self.dx, None)
 
-        else: # self.pos_x + self.vel_x * dt > Window.width - self.radius
+        else: # self.pos_x + self.dx > Window.width - self.radius
             self.pos_x = Window.width - self.radius
             if self.callback:
-                self.callback(self.vel_x * dt, None)
+                self.callback(-self.dx, None)
 
-        if self.radius <= self.pos_y + self.vel_y * dt <= Window.height - self.radius:
-            self.pos_y += self.vel_y * dt
-        elif self.radius > self.pos_y + self.vel_y * dt:
+        if self.radius <= self.pos_y + self.dy <= Window.height - self.radius:
+            self.pos_y += self.dy
+        elif self.radius > self.pos_y + self.dy:
             self.pos_y = self.radius
             if self.callback:
-                self.callback(None, self.vel_y * dt)
+                self.callback(None, -self.dy)
 
-        else: # self.pos_y + self.vel_y * dt > Window.height - self.radius
+        else: # self.pos_y + self.dy > Window.height - self.radius
             self.pos_y = Window.height - self.radius
             if self.callback:
-                self.callback(None, self.vel_y * dt)
+                self.callback(None, -self.dy)
 
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
+        self.rotate.origin = self.get_curr_pos()
+
+        self.set_rotate_angle()
         return True
+
+
+    def set_rotate_angle(self):
+        self.last_angle = self.rotate.angle
+        
+        # counterclockwise --> positive, clockwise --> negative
+        if self.dy == 0:
+            if self.dx > 0: # horizontally right
+                self.rotate.angle = -90
+            elif self.dx < 0: # horizontally left
+                self.rotate.angle = 90
+        else:
+            temp_angle = np.arctan(-self.dx / self.dy) * 180 / np.pi
+            if self.dx < 0 and self.dy < 0: # lower left
+                self.rotate.angle = 180+temp_angle
+
+            elif self.dx > 0 and self.dy < 0: # lower right
+                temp_angle = np.arctan(self.dx / self.dy) * 180 / np.pi
+                self.rotate.angle = -(180 + temp_angle)
+
+            elif self.dx == 0 and self.dy < 0: # vertically down
+                self.rotate.angle = -180
+            else:
+                self.rotate.angle = temp_angle
+
 
 # testing widget
 class MainWidget(BaseWidget):
@@ -143,14 +181,13 @@ class MainWidget(BaseWidget):
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         self.objects.on_update()
 
-        self.info.text = f'{str(Window.mouse_pos)}\n'
-        self.info.text += f'fps:{kivyClock.get_fps():.0f}\n'
+        self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)'
-
+        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)\n'
+        self.info.text += f'{self.starship.rotate.angle}'
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
         resize_topleft_label(self.info)
