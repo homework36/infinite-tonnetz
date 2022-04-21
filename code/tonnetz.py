@@ -141,7 +141,7 @@ class Tonnetz(InstructionGroup):
     #     # print('num lines',len(self.line_list))
 
     def make_lines_p(self):
-        print('make lines p',self.origin)
+        # print('make lines p',self.origin)
         for line in self.line_list_p:
                 if line in self.children:
                     self.children.remove(line)
@@ -156,7 +156,7 @@ class Tonnetz(InstructionGroup):
             self.add(line)
     
     def make_lines_rl(self):
-        print('make lines rl',self.origin)
+        # print('make lines rl',self.origin)
         for line in self.line_list_rl:
                 if line in self.children:
                     self.children.remove(line)

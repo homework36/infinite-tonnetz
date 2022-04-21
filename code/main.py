@@ -38,6 +38,7 @@ there would be the error " OSError: [Errno 48] Address already in use"
 Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
 
+inner_boundary_factor = 0.2 
 rescale_const = Window.width / 2
 class PhysBubble(InstructionGroup):
     def __init__(self, pos, r, color=(1,1,1), callback=None):
@@ -64,6 +65,9 @@ class PhysBubble(InstructionGroup):
         self.callback = callback
         self.last_angle = 0
 
+        # self.width, self.height = Window.width, Window.height
+        
+    
     def set_accel(self, ax, ay):
         self.ax = ax
         self.ay = ay
@@ -87,27 +91,35 @@ class PhysBubble(InstructionGroup):
         self.dy = self.vel_y * dt
 
         # integrate vel to get pos
-        if self.radius <= self.pos_x + self.dx <= Window.width - self.radius:
+        width, height = Window.width, Window.height
+        left_width = width * inner_boundary_factor
+        right_width = width * (1-inner_boundary_factor)
+        bottom_height = height * inner_boundary_factor
+        top_height = height * (1-inner_boundary_factor)
+        # x within boundary
+        if self.radius + left_width <= self.pos_x + self.dx <= right_width - self.radius:
             self.pos_x += self.dx
-        elif self.radius > self.pos_x + self.dx:
-            self.pos_x = self.radius
+        # x left
+        elif self.radius + left_width > self.pos_x + self.dx:
+            self.pos_x = self.radius + left_width
             if self.callback:
                 self.callback(-self.dx, None)
-
+        # x right
         else: # self.pos_x + self.dx > Window.width - self.radius
-            self.pos_x = Window.width - self.radius
+            self.pos_x = right_width- self.radius
             if self.callback:
                 self.callback(-self.dx, None)
 
-        if self.radius <= self.pos_y + self.dy <= Window.height - self.radius:
+        # y within boundary
+        if self.radius + bottom_height <= self.pos_y + self.dy <= top_height - self.radius:
             self.pos_y += self.dy
-        elif self.radius > self.pos_y + self.dy:
-            self.pos_y = self.radius
+        elif self.radius + bottom_height > self.pos_y + self.dy:
+            self.pos_y = self.radius + bottom_height
             if self.callback:
                 self.callback(None, -self.dy)
 
         else: # self.pos_y + self.dy > Window.height - self.radius
-            self.pos_y = Window.height - self.radius
+            self.pos_y = top_height - self.radius
             if self.callback:
                 self.callback(None, -self.dy)
 

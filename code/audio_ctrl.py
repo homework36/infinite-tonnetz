@@ -483,7 +483,6 @@ class Arpeggiator2(object):
         if self.notes is not None:
             self.possible_notes = np.sort(np.concatenate((self.notes,self.notes+12,self.notes-12)))
     
-
     
     def set_jump(self,in_num):
         self.jump = in_num
@@ -590,5 +589,5 @@ class Arpeggiator2(object):
         if self.vel <= 80:
             self.vel = 80
     
-    ##############################end of redundant part
+    ############################## end of redundant part
 
