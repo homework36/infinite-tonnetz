@@ -84,11 +84,11 @@ class StarLine(InstructionGroup):
         pass
         
 
-    def check_cross(self, main_obj):
+    def check_cross(self, cur_pos, last_pos):
         '''pos: current position of main object
            last_pos: last position of main object'''
         print('checking!',self.type)
-        if self.intersect(main_obj.get_curr_pos(), main_obj.get_last_pos(),self.end1,self.end2):
+        if self.intersect(cur_pos, last_pos,self.end1,self.end2):
             return self.type
         else:
             return None

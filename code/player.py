@@ -33,8 +33,10 @@ class Player(object):
  
     def on_update(self):
         self.audio_ctrl.on_update()
+        last_pos = self.bubble.get_last_pos()
+        cur_pos = self.bubble.get_curr_pos()
         for line in self.tonnetz.line_list:
-            if_trans = line.check_cross(self.bubble)
+            if_trans = line.check_cross(cur_pos,last_pos)
             if if_trans is None:
                 pass
             else:
