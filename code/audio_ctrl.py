@@ -22,6 +22,8 @@ from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGr
 from imslib.leap import getLeapInfo, getLeapFrame
 from imslib.synth import Synth
 from imslib.mixer import Mixer
+from imslib.wavegen import WaveGenerator
+from imslib.wavesrc import WaveBuffer, WaveFile
 
 # from random import randint, random
 import numpy as np
@@ -72,6 +74,10 @@ class AudioController(object):
         self.melody = Arpeggiator2(self.sched, self.synth, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
 
         self.playing = False
+
+        self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'))
+        self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'))
+        self.reading_max_gain = 0.4
     
     def make_notes(self):
         self.melodynotes = self.pitchlists[self.mode] + self.triad[0] 
@@ -99,6 +105,7 @@ class AudioController(object):
 
     # start / stop the song
     def toggle(self):
+        self.jpn_reading.play_toggle()
         if self.chord_audio.playing:
             self.chord_audio.stop()
             self.arpeg.stop()
