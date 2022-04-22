@@ -52,7 +52,7 @@ class MainWidget(BaseWidget):
 
         self.color = Color(1, 1, 1)
         self.canvas.add(self.color)
-        self.tonnetz = Tonnetz(400)
+        self.tonnetz = Tonnetz(500)
         self.canvas.add(self.tonnetz)
 
         self.starship = PhysBubble(pos=(Window.width/2, Window.height/2), 

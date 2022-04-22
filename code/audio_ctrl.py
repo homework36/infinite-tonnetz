@@ -71,13 +71,19 @@ class AudioController(object):
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
         self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, channel = 2, program = (0,47) )  
-        self.melody = Arpeggiator2(self.sched, self.synth, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
+        self.melody = Arpeggiator2(self.sched, self.synth_bg, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
 
         self.playing = False
 
-        self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'))
-        self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'))
-        self.reading_max_gain = 0.4
+        self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
+        self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
+        self.reading_max_gain = 0.05
+        self.mixer.add(self.jpn_reading)
+        self.mixer.add(self.fr_reading)
+        self.jpn_reading.pause()
+        self.fr_reading.pause()
+        self.jpn_reading.set_gain(self.reading_max_gain)
+        self.fr_reading.set_gain(self.reading_max_gain)
     
     def make_notes(self):
         self.melodynotes = self.pitchlists[self.mode] + self.triad[0] 
@@ -105,16 +111,18 @@ class AudioController(object):
 
     # start / stop the song
     def toggle(self):
-        self.jpn_reading.play_toggle()
+        
         if self.chord_audio.playing:
             self.chord_audio.stop()
             self.arpeg.stop()
             self.melody.stop()
+            self.jpn_reading.pause()
             self.playing = False
         else:
             self.chord_audio.start()
             self.arpeg.start()
             self.melody.start()
+            self.jpn_reading.play()
             self.playing = True
 
     # needed to update audio
@@ -481,7 +489,7 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 25
+        self.vel = 20
         self.lastpitch = None
         self.jump = 0.5
       
