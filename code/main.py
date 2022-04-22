@@ -19,8 +19,7 @@ from imslib.audio import Audio
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
 from imslib.core import BaseWidget, run
 from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
-from imslib.leap import getLeapInfo, getLeapFrame
-from imslib.synth import Synth
+
 
 from random import randint, random
 import numpy as np
@@ -30,6 +29,7 @@ from random import randint
 from tonnetz import Tonnetz
 from audio_ctrl import AudioController
 from player import Player
+from objects import PhysBubble
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -38,111 +38,7 @@ there would be the error " OSError: [Errno 48] Address already in use"
 Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 '''
 
-rescale_const = Window.width / 2
-class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1,1,1), callback=None):
-        super(PhysBubble, self).__init__()
-
-        self.radius = r
-        self.pos_x, self.pos_y = pos
-        self.last_pos = pos
-        self.vel_x, self.vel_y = 0., 0.
-
-        self.add(PushMatrix())
-        self.rotate = Rotate(angle=0)
-        self.add(self.rotate)
-
-        self.color = Color(rgb=color)
-        self.add(self.color)
-
-        self.circle = CEllipse(cpos=pos, csize=(2*r,2*r), segments = 40)
-        self.add(self.circle)
-
-        self.add(PopMatrix())
-
-        self.circle.texture = Image(source='../img/icon.png').texture
-        self.callback = callback
-        self.last_angle = 0
-
-    def set_accel(self, ax, ay):
-        self.ax = ax
-        self.ay = ay
-
-    def get_last_pos(self):
-        return self.last_pos
-
-    def get_curr_pos(self):
-        return [self.pos_x, self.pos_y]
-
-    def on_resize(self, win_size):
-        self.circle.csize = (2 * win_size[0] // 50,2 * win_size[0] // 50)
-
-    def on_update(self, dt):
-        self.last_pos = [self.pos_x, self.pos_y]
-
-        # integrate accel to get vel
-        self.vel_x = self.ax * rescale_const
-        self.vel_y = self.ay * rescale_const
-        self.dx = self.vel_x * dt
-        self.dy = self.vel_y * dt
-
-        # integrate vel to get pos
-        if self.radius <= self.pos_x + self.dx <= Window.width - self.radius:
-            self.pos_x += self.dx
-        elif self.radius > self.pos_x + self.dx:
-            self.pos_x = self.radius
-            if self.callback:
-                self.callback(-self.dx, None)
-
-        else: # self.pos_x + self.dx > Window.width - self.radius
-            self.pos_x = Window.width - self.radius
-            if self.callback:
-                self.callback(-self.dx, None)
-
-        if self.radius <= self.pos_y + self.dy <= Window.height - self.radius:
-            self.pos_y += self.dy
-        elif self.radius > self.pos_y + self.dy:
-            self.pos_y = self.radius
-            if self.callback:
-                self.callback(None, -self.dy)
-
-        else: # self.pos_y + self.dy > Window.height - self.radius
-            self.pos_y = Window.height - self.radius
-            if self.callback:
-                self.callback(None, -self.dy)
-
-        self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
-        self.rotate.origin = self.get_curr_pos()
-
-        self.set_rotate_angle()
-        return True
-
-
-    def set_rotate_angle(self):
-        self.last_angle = self.rotate.angle
-        
-        # counterclockwise --> positive, clockwise --> negative
-        if self.dy == 0:
-            if self.dx > 0: # horizontally right
-                self.rotate.angle = -90
-            elif self.dx < 0: # horizontally left
-                self.rotate.angle = 90
-        else:
-            temp_angle = np.arctan(-self.dx / self.dy) * 180 / np.pi
-            if self.dx < 0 and self.dy < 0: # lower left
-                self.rotate.angle = 180+temp_angle
-
-            elif self.dx > 0 and self.dy < 0: # lower right
-                temp_angle = np.arctan(self.dx / self.dy) * 180 / np.pi
-                self.rotate.angle = -(180 + temp_angle)
-
-            elif self.dx == 0 and self.dy < 0: # vertically down
-                self.rotate.angle = -180
-            else:
-                self.rotate.angle = temp_angle
-
-
-# testing widget
+# mainwidget
 class MainWidget(BaseWidget):
     def __init__(self, ip, port):
         super(MainWidget, self).__init__()
@@ -188,6 +84,7 @@ class MainWidget(BaseWidget):
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
         self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)\n'
         self.info.text += f'{self.starship.rotate.angle}'
+        
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
         resize_topleft_label(self.info)
