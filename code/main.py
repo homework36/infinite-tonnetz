@@ -78,6 +78,7 @@ class MainWidget(BaseWidget):
         self.audio_ctrl.on_update()
 
         self.update_pos()
+        self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         self.objects.on_update()
 

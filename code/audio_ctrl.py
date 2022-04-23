@@ -17,9 +17,6 @@ from kivy.clock import Clock as kivyClock
 from imslib.writer import AudioWriter
 from imslib.audio import Audio
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
-from imslib.core import BaseWidget, run
-from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
-from imslib.leap import getLeapInfo, getLeapFrame
 from imslib.synth import Synth
 from imslib.mixer import Mixer
 from imslib.wavegen import WaveGenerator
@@ -39,7 +36,7 @@ class AudioController(object):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.mixer = Mixer()
-        self.synth_bg = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
+        self.synth_bg = Synth()
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
 
 
@@ -165,6 +162,7 @@ class chord_audio(object):
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
+        self.synth.cc(self.channel,91,127)
 
 
     def toggle(self):

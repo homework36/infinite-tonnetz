@@ -250,7 +250,7 @@ class Tonnetz(InstructionGroup):
         for line in self.line_list:
             line.update_line(diff_origin[0],diff_origin[1])
 
-    def on_update(self,dt):
+    def on_update(self):
         if self.boundary_moving:
             pass
         else:
