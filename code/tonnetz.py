@@ -100,11 +100,11 @@ class StarLine(InstructionGroup):
             # print('cy',self.cy,'obj last pos',last_pos,'obj cur pos',cur_pos)
             # print('checking!', self.cx, self.cy)
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                print('p trans with line',self.cy)
+                # print('p trans with line',self.cy)
                 self.last_cross = True
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
-                print('p trans with line',self.cy)
+                # print('p trans with line',self.cy)
                 self.last_cross = True
                 return True
 

@@ -74,7 +74,7 @@ class MainWidget(BaseWidget):
         self.player = Player(self.starship, self.tonnetz, self.audio_ctrl)
 
     def on_update(self):
-        self.player.on_update()
+        # self.player.on_update()
         self.audio_ctrl.on_update()
 
         self.update_pos()
