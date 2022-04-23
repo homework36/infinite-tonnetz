@@ -15,10 +15,10 @@ from kivy.uix.image import Image
 import numpy as np
 
 inner_boundary_factor = 0.2 
-rescale_const = Window.width / 2
+rescale_const = Window.width / 2 / 3
 
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1,1,1), callback=None):
+    def __init__(self, pos, r, color=(1,1,1), callback=None, in_boundary=None):
         super(PhysBubble, self).__init__()
 
         self.radius = r
@@ -40,6 +40,7 @@ class PhysBubble(InstructionGroup):
 
         self.circle.texture = Image(source='../img/icon.png').texture
         self.callback = callback
+        self.in_boundary = in_boundary
         self.last_angle = 0
 
         # self.width, self.height = Window.width, Window.height
@@ -76,29 +77,31 @@ class PhysBubble(InstructionGroup):
         # x within boundary
         if self.radius + left_width <= self.pos_x + self.dx <= right_width - self.radius:
             self.pos_x += self.dx
+            self.in_boundary(True)
         # x left
         elif self.radius + left_width > self.pos_x + self.dx:
             self.pos_x = self.radius + left_width
-            if self.callback:
-                self.callback(-self.dx, None)
+            self.callback(-self.dx, None)
+            self.in_boundary(False)
         # x right
         else: # self.pos_x + self.dx > Window.width - self.radius
             self.pos_x = right_width- self.radius
-            if self.callback:
-                self.callback(-self.dx, None)
+            self.callback(-self.dx, None)
+            self.in_boundary(False)
 
         # y within boundary
         if self.radius + bottom_height <= self.pos_y + self.dy <= top_height - self.radius:
             self.pos_y += self.dy
+            self.in_boundary(True)
         elif self.radius + bottom_height > self.pos_y + self.dy:
             self.pos_y = self.radius + bottom_height
-            if self.callback:
-                self.callback(None, -self.dy)
+            self.callback(None, -self.dy)
+            self.in_boundary(False)
 
         else: # self.pos_y + self.dy > Window.height - self.radius
             self.pos_y = top_height - self.radius
-            if self.callback:
-                self.callback(None, -self.dy)
+            self.callback(None, -self.dy)
+            self.in_boundary(False)
 
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
         self.rotate.origin = self.get_curr_pos()

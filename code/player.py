@@ -32,11 +32,5 @@ class Player(object):
         
  
     def on_update(self):
-        self.audio_ctrl.on_update()
-        for line in self.tonnetz.line_list:
-            if_trans = line.check_cross(self.bubble)
-            if if_trans is None:
-                pass
-            else:
-                # print('trans:',if_trans)
-                self.audio_ctrl.make_prl(if_trans)
+        pass
+    

@@ -17,9 +17,6 @@ from kivy.clock import Clock as kivyClock
 from imslib.writer import AudioWriter
 from imslib.audio import Audio
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
-from imslib.core import BaseWidget, run
-from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
-from imslib.leap import getLeapInfo, getLeapFrame
 from imslib.synth import Synth
 from imslib.mixer import Mixer
 from imslib.wavegen import WaveGenerator
@@ -39,7 +36,7 @@ class AudioController(object):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.mixer = Mixer()
-        self.synth_bg = SynthEffect(effect=Reverb(room_size=0.75, wet_level=0.5))
+        self.synth_bg = Synth()
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
 
 
@@ -61,6 +58,7 @@ class AudioController(object):
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.triad = open_triad(self.triad)
         self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
+        self.since_last_trans_count = 100
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -71,13 +69,19 @@ class AudioController(object):
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
         self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, channel = 2, program = (0,47) )  
-        self.melody = Arpeggiator2(self.sched, self.synth, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
+        self.melody = Arpeggiator2(self.sched, self.synth_bg, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
 
         self.playing = False
 
-        self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'))
-        self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'))
-        self.reading_max_gain = 0.4
+        self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
+        self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
+        self.reading_max_gain = 0.05
+        self.mixer.add(self.jpn_reading)
+        self.mixer.add(self.fr_reading)
+        self.jpn_reading.pause()
+        self.fr_reading.pause()
+        self.jpn_reading.set_gain(self.reading_max_gain)
+        self.fr_reading.set_gain(self.reading_max_gain)
     
     def make_notes(self):
         self.melodynotes = self.pitchlists[self.mode] + self.triad[0] 
@@ -92,33 +96,42 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
-
-        # print('making trans:',trans)
+        print()
+        print('making trans:',trans)
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
-        # print('after trans',self.key, self.triad, self.mode)
+        print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
+        print('since last trans',self.since_last_trans_count)
+        print()
+            
+        self.chord_audio.start()
+        
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
+        
 
     # start / stop the song
     def toggle(self):
-        self.jpn_reading.play_toggle()
-        if self.chord_audio.playing:
-            self.chord_audio.stop()
+        
+        if self.playing:
+            # self.chord_audio.stop()
             self.arpeg.stop()
             self.melody.stop()
+            self.jpn_reading.pause()
             self.playing = False
         else:
-            self.chord_audio.start()
+            # self.chord_audio.start()
             self.arpeg.start()
             self.melody.start()
+            self.jpn_reading.play()
             self.playing = True
 
     # needed to update audio
     def on_update(self):
+        self.since_last_trans_count += 1
         self.audio.on_update()
 
 # no looping
@@ -141,49 +154,30 @@ class chord_audio(object):
 
         self.triad = triad
         self.playing = False
-        self.length = 480*5
-        self.vel = 40
+        self.length = 480*2
+        self.vel = 50
 
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
+        self.synth.cc(self.channel,91,40)
 
 
     def toggle(self):
         if self.playing:
             self.stop()
+            self.playing = False
         else:
             self.start()
+            self.playing = True
     
-    # simple version using continuous synth
-    ############################################
-
-    # def set_triad(self, new_triad):
-    #     self.stop()
-    #     self.triad = new_triad
-    #     self.start()
-
-    # def start(self):
-    #     if self.playing:
-    #         return
-
-    #     self.playing = True
-    #     self.synth.program(self.channel, self.program[0], self.program[1])
-
-    #     bass, third, fifth = self.triad
-    #     self.synth.noteon(self.channel, bass, self.vel)
-    #     self.synth.noteon(self.channel, third, self.vel)
-    #     self.synth.noteon(self.channel, fifth, self.vel)
-
-    # def stop(self):
-    #     if not self.playing:
-    #         return
-
-    #     self.playing = False
-    #     bass, third, fifth = self.triad
-    #     self.synth.noteoff(self.channel, bass)
-    #     self.synth.noteoff(self.channel, third)
-    #     self.synth.noteoff(self.channel, fifth)
+    def fade_out(self):
+        if self.playing:
+            val = self.vel
+            while val > 0:
+                val -= 10
+                self.synth.cc(self.channel,7,val)
+            self.stop()
 
     
     # 2nd version using reverb synth
@@ -191,23 +185,23 @@ class chord_audio(object):
 
     def set_triad(self, new_triad):
         self.triad = new_triad
-        if not self.loop:
-            self.stop()
-            self.start()
-
+        # if not self.loop:
+        #     self.stop()
+        #     self.start()
+        self.fade_out()
 
     def start(self):
         if self.playing:
             return
-
+        self.synth.cc(self.channel,7,self.vel)
         self.playing = True
         self.synth.program(self.channel, self.program[0], self.program[1])
 
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        next_beat = quantize_tick_up(now, kTicksPerQuarter)
-        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
+        # next_beat = quantize_tick_up(now, kTicksPerQuarter)
+        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
 
 
     def stop(self):
@@ -231,12 +225,12 @@ class chord_audio(object):
         # play new note if available
         bass, third, fifth = self.triad
         # play note and post note off
-        self.synth.noteon(0, bass, self.vel)
-        self.synth.noteon(1, third, self.vel)
-        self.synth.noteon(2, fifth, self.vel)
+        self.synth.noteon(self.channel, bass, self.vel)
+        self.synth.noteon(self.channel, third, self.vel)
+        self.synth.noteon(self.channel, fifth, self.vel)
 
         off_tick = tick + self.length * .95 # slightly detached 
-        # self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
+        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
         self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, third)) 
         self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, fifth)) 
 
@@ -481,7 +475,7 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 25
+        self.vel = 20
         self.lastpitch = None
         self.jump = 0.5
       
