@@ -41,19 +41,17 @@ class StarLine(InstructionGroup):
         self.seg = seg_length
         self.seg_height = self.seg*sq3/2
         self.end1, self.end2 = self.calc_line()
-        self.last_point = None
         self.line = Line(points=(self.end1[0],self.end1[1],self.end2[0],self.end2[1]))
         self.intersect = intersect
         self.width, self.height = Window.width, Window.height
         self.range = range
-        self.last_cross = False
+        self.last_cross_pt = None
 
         self.add(self.line)
     
     def update_line(self, dx, dy):
         self.cx += dx
         self.cy += dy
-        self.last_point = np.array([self.cx,self.cy])
         self.end1, self.end2 = self.calc_line()
         self.line.points=(self.end1[0],self.end1[1],self.end2[0],self.end2[1])
 
@@ -91,34 +89,33 @@ class StarLine(InstructionGroup):
            last_pos: last position of main object'''
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
-        if self.last_point is not None:
-            if np.linalg.norm(temp-self.last_point) <= 10 and self.last_cross and moving:
-                print('preventing duplicate')
-                self.last_cross = False
+        if self.last_cross_pt is not None:
+            if np.linalg.norm(temp-self.last_cross_pt) <= 10 and moving:
+                # print('preventing duplicate')
                 return False
 
         if self.type == 'p':
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
-                print(self.type,'trans with line',self.cx,self.cy)
-                self.last_cross = True
+                # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
+                # print(self.type,'trans with line',self.cx,self.cy)
+                self.last_cross_pt = np.array([self.cx,self.cy])
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
-                print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
-                print(self.type,'trans with line',self.cx,self.cy)
-                self.last_cross = True
+                # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
+                # print(self.type,'trans with line',self.cx,self.cy)
+                self.last_cross_pt = np.array([self.cx,self.cy])
                 return True
 
-            self.last_cross = False
+            self.last_cross_pt = None
             return False
 
         if self.intersect(cur_pos, last_pos, self.end1, self.end2):
-            print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
-            print(self.type,'trans with line',self.cx,self.cy)
-            self.last_cross = True
+            # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
+            # print(self.type,'trans with line',self.cx,self.cy)
+            self.last_cross_pt = np.array([self.cx,self.cy])
             return True
         else:
-            self.last_cross = False
+            self.last_cross_pt = None
             return False
         
 
