@@ -92,19 +92,19 @@ class StarLine(InstructionGroup):
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
         if self.last_point is not None:
-            if np.linalg.norm(temp-self.last_point) <= 4 and self.last_cross:
+            if np.linalg.norm(temp-self.last_point) <= 10 and self.last_cross:
                 self.last_cross = False
                 return False
 
         if self.type == 'p':
-            # print('cy',self.cy,'obj last pos',last_pos,'obj cur pos',cur_pos)
-            # print('checking!', self.cx, self.cy)
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                # print('p trans with line',self.cy)
+                print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
+                print(self.type,'trans with line',self.cx,self.cy)
                 self.last_cross = True
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
-                # print('p trans with line',self.cy)
+                print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
+                print(self.type,'trans with line',self.cx,self.cy)
                 self.last_cross = True
                 return True
 
@@ -112,6 +112,8 @@ class StarLine(InstructionGroup):
             return False
 
         if self.intersect(cur_pos, last_pos, self.end1, self.end2):
+            print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
+            print(self.type,'trans with line',self.cx,self.cy)
             self.last_cross = True
             return True
         else:
@@ -140,7 +142,7 @@ class Tonnetz(InstructionGroup):
         self.last_origin = self.origin.copy()
         self.callback = callback
         self.obj = obj
-        self.boundary_moving = False
+        self.in_boundary = False
 
     def import_obj(self,obj):
         self.obj = obj
@@ -155,7 +157,8 @@ class Tonnetz(InstructionGroup):
             
         self.line_list = self.line_list_p + self.line_list_r + self.line_list_l
         
-
+    def within_boundary(self,truth_val):
+        self.in_boundary = truth_val
 
     def make_lines_p(self):
         for line in self.line_list_p:
@@ -220,7 +223,6 @@ class Tonnetz(InstructionGroup):
         self.make_lines()
 
     def on_boundary(self, dx, dy):
-        self.boundary_moving = True
         x_adj = 0
         y_adj = 0
         # print('here', dx, dy)
@@ -244,17 +246,16 @@ class Tonnetz(InstructionGroup):
             self.check_lines(dx=-x_adj,dy=-y_adj)
             self.update_lines(self.origin-self.last_origin)
             # print('end of boundary checking\n')
-        self.boundary_moving = False
         
     def update_lines(self, diff_origin):
         for line in self.line_list:
             line.update_line(diff_origin[0],diff_origin[1])
 
     def on_update(self):
-        if self.boundary_moving:
-            pass
-        else:
+        if self.in_boundary:
             self.check_lines()
+        else:
+            pass
 
     def check_lines(self,dx=0,dy=0):
         if self.obj is not None and self.callback is not None:

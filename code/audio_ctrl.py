@@ -162,7 +162,7 @@ class chord_audio(object):
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
-        self.synth.cc(self.channel,91,127)
+        self.synth.cc(self.channel,91,50)
 
 
     def toggle(self):

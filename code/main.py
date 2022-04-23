@@ -60,7 +60,8 @@ class MainWidget(BaseWidget):
         self.starship = PhysBubble(pos=(Window.width/2, Window.height/2), 
                                    r=Window.width/50, 
                                    color=(1,1,1),
-                                   callback=self.tonnetz.on_boundary)
+                                   callback=self.tonnetz.on_boundary,
+                                   in_boundary=self.tonnetz.within_boundary)
         self.tonnetz.import_obj(self.starship)
         
         
