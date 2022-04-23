@@ -52,21 +52,25 @@ class MainWidget(BaseWidget):
 
         self.color = Color(1, 1, 1)
         self.canvas.add(self.color)
-        self.tonnetz = Tonnetz(500)
-        self.canvas.add(self.tonnetz)
 
+
+        self.audio_ctrl = AudioController()
+        self.tonnetz = Tonnetz(600,callback=self.audio_ctrl.make_prl)
+        self.canvas.add(self.tonnetz)
         self.starship = PhysBubble(pos=(Window.width/2, Window.height/2), 
                                    r=Window.width/50, 
                                    color=(1,1,1),
                                    callback=self.tonnetz.on_boundary)
+        self.tonnetz.import_obj(self.starship)
+        
+        
 
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
         self.canvas.add(self.objects)
         self.objects.add(self.starship)
 
-        self.audio_ctrl = AudioController()
-
+        
         self.player = Player(self.starship, self.tonnetz, self.audio_ctrl)
 
     def on_update(self):

@@ -15,7 +15,7 @@ from kivy.uix.image import Image
 import numpy as np
 
 inner_boundary_factor = 0.2 
-rescale_const = Window.width / 2 
+rescale_const = Window.width / 2 / 5
 
 class PhysBubble(InstructionGroup):
     def __init__(self, pos, r, color=(1,1,1), callback=None):

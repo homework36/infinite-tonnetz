@@ -61,6 +61,7 @@ class AudioController(object):
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.triad = open_triad(self.triad)
         self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
+        self.since_last_trans_count = 100
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -98,21 +99,29 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
-
-        # print('making trans:',trans)
+        print()
+        print('making trans:',trans)
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
-        # print('after trans',self.key, self.triad, self.mode)
+        print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
+        print('since last trans',self.since_last_trans_count)
+        print()
+        # if self.chord_audio.playing:
+        #     self.chord_audio.fade_out()
+            
+        self.chord_audio.start()
+        
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
+        
 
     # start / stop the song
     def toggle(self):
         
-        if self.chord_audio.playing:
+        if self.playing:
             self.chord_audio.stop()
             self.arpeg.stop()
             self.melody.stop()
@@ -127,6 +136,7 @@ class AudioController(object):
 
     # needed to update audio
     def on_update(self):
+        self.since_last_trans_count += 1
         self.audio.on_update()
 
 # no looping
@@ -149,7 +159,7 @@ class chord_audio(object):
 
         self.triad = triad
         self.playing = False
-        self.length = 480*5
+        self.length = 480*4
         self.vel = 40
 
         self.on_cmd = None
@@ -160,38 +170,18 @@ class chord_audio(object):
     def toggle(self):
         if self.playing:
             self.stop()
+            self.playing = False
         else:
             self.start()
+            self.playing = True
     
-    # simple version using continuous synth
-    ############################################
-
-    # def set_triad(self, new_triad):
-    #     self.stop()
-    #     self.triad = new_triad
-    #     self.start()
-
-    # def start(self):
-    #     if self.playing:
-    #         return
-
-    #     self.playing = True
-    #     self.synth.program(self.channel, self.program[0], self.program[1])
-
-    #     bass, third, fifth = self.triad
-    #     self.synth.noteon(self.channel, bass, self.vel)
-    #     self.synth.noteon(self.channel, third, self.vel)
-    #     self.synth.noteon(self.channel, fifth, self.vel)
-
-    # def stop(self):
-    #     if not self.playing:
-    #         return
-
-    #     self.playing = False
-    #     bass, third, fifth = self.triad
-    #     self.synth.noteoff(self.channel, bass)
-    #     self.synth.noteoff(self.channel, third)
-    #     self.synth.noteoff(self.channel, fifth)
+    def fade_out(self):
+        if self.playing:
+            val = self.vel
+            while val > 0:
+                val -= 15
+                self.synth.cc(self.channel,7,val)
+            self.playing = False
 
     
     # 2nd version using reverb synth
@@ -214,8 +204,8 @@ class chord_audio(object):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        next_beat = quantize_tick_up(now, kTicksPerQuarter)
-        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
+        # next_beat = quantize_tick_up(now, kTicksPerQuarter)
+        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
 
 
     def stop(self):
