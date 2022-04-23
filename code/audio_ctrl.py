@@ -105,8 +105,6 @@ class AudioController(object):
         self.chord_audio.set_triad(self.triad)
         print('since last trans',self.since_last_trans_count)
         print()
-        # if self.chord_audio.playing:
-        #     self.chord_audio.fade_out()
             
         self.chord_audio.start()
         
@@ -119,13 +117,13 @@ class AudioController(object):
     def toggle(self):
         
         if self.playing:
-            self.chord_audio.stop()
+            # self.chord_audio.stop()
             self.arpeg.stop()
             self.melody.stop()
             self.jpn_reading.pause()
             self.playing = False
         else:
-            self.chord_audio.start()
+            # self.chord_audio.start()
             self.arpeg.start()
             self.melody.start()
             self.jpn_reading.play()
@@ -156,13 +154,13 @@ class chord_audio(object):
 
         self.triad = triad
         self.playing = False
-        self.length = 480*4
-        self.vel = 40
+        self.length = 480*2
+        self.vel = 50
 
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
-        self.synth.cc(self.channel,91,50)
+        self.synth.cc(self.channel,91,40)
 
 
     def toggle(self):
@@ -177,9 +175,9 @@ class chord_audio(object):
         if self.playing:
             val = self.vel
             while val > 0:
-                val -= 15
+                val -= 10
                 self.synth.cc(self.channel,7,val)
-            self.playing = False
+            self.stop()
 
     
     # 2nd version using reverb synth
@@ -187,15 +185,15 @@ class chord_audio(object):
 
     def set_triad(self, new_triad):
         self.triad = new_triad
-        if not self.loop:
-            self.stop()
-            self.start()
-
+        # if not self.loop:
+        #     self.stop()
+        #     self.start()
+        self.fade_out()
 
     def start(self):
         if self.playing:
             return
-
+        self.synth.cc(self.channel,7,self.vel)
         self.playing = True
         self.synth.program(self.channel, self.program[0], self.program[1])
 
@@ -227,12 +225,12 @@ class chord_audio(object):
         # play new note if available
         bass, third, fifth = self.triad
         # play note and post note off
-        self.synth.noteon(0, bass, self.vel)
-        self.synth.noteon(1, third, self.vel)
-        self.synth.noteon(2, fifth, self.vel)
+        self.synth.noteon(self.channel, bass, self.vel)
+        self.synth.noteon(self.channel, third, self.vel)
+        self.synth.noteon(self.channel, fifth, self.vel)
 
         off_tick = tick + self.length * .95 # slightly detached 
-        # self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
+        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
         self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, third)) 
         self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, fifth)) 
 

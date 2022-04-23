@@ -86,13 +86,14 @@ class StarLine(InstructionGroup):
         pass
         
 
-    def check_cross(self, cur_pos, last_pos):
+    def check_cross(self, cur_pos, last_pos, moving=False):
         '''pos: current position of main object
            last_pos: last position of main object'''
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
         if self.last_point is not None:
-            if np.linalg.norm(temp-self.last_point) <= 10 and self.last_cross:
+            if np.linalg.norm(temp-self.last_point) <= 10 and self.last_cross and moving:
+                print('preventing duplicate')
                 self.last_cross = False
                 return False
 
@@ -263,15 +264,15 @@ class Tonnetz(InstructionGroup):
             cur_pos = self.obj.get_curr_pos()
             adjust_pos = [cur_pos[0]+dx,cur_pos[1]+dy]
             for line in self.line_list_p:
-                if line.check_cross(adjust_pos, last_pos):
+                if line.check_cross(adjust_pos, last_pos, True):
                     self.callback('p')
     
             for line in self.line_list_r:
-                if line.check_cross(adjust_pos, last_pos):
+                if line.check_cross(adjust_pos, last_pos, True):
                     self.callback('r')
 
             for line in self.line_list_l:
-                if line.check_cross(adjust_pos, last_pos):
+                if line.check_cross(adjust_pos, last_pos, True):
                     self.callback('l')
     
         
