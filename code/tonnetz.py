@@ -273,12 +273,12 @@ class Tonnetz(InstructionGroup):
                     self.callback('l')
     
     def modify_seq_length(self,val):
-        if self.seg >= 100 and self.seg <= self.width:
-            self.seg += val
-            self.seg_height = self.seg*sq3/2
-            self.origin[0] %= self.seg * 2
-            self.origin[1] %= self.seg_height * 2
-            self.make_lines()
+        temp_seg = self.seg + val
+        self.seg = max(100,min(self.width,temp_seg))
+        self.seg_height = self.seg*sq3/2
+        self.origin[0] %= self.seg * 2
+        self.origin[1] %= self.seg_height * 2
+        self.make_lines()
 
     
         

@@ -4,12 +4,13 @@ import numpy as np
 
 
 class Player(object):
-    def __init__(self, main_obj, tonnetz, audio_ctrl, space_objects):
+    def __init__(self, main_obj, tonnetz, audio_ctrl, space_objects, static_objects):
         super(Player, self).__init__()
         self.tonnetz = tonnetz
         self.audio_ctrl = audio_ctrl
         self.main_obj = main_obj
         self.space_objects = space_objects
+        self.static_objects = static_objects
         self.on_update()
 
     def on_update(self):
@@ -22,7 +23,7 @@ class Player(object):
             type = i.type
             dist = np.sqrt((main_x - obj_x)**2 + (main_y - obj_y)**2)
             touch_dist = (main_size + obj_size)
-            if type == 'planet':
+            if type == 'star':
                 if dist < touch_dist:
                     self.audio_ctrl.play_chromscale()
 
@@ -41,7 +42,7 @@ class Player(object):
                     if self.audio_ctrl.playing:
                         self.audio_ctrl.toggle()
 
-            elif type == 'star':  # play seventh note
+            elif type == 'planet':  # play seventh note
                 if dist < touch_dist:
                     self.audio_ctrl.toggle_seventh()
 
@@ -51,6 +52,14 @@ class Player(object):
             scale_x = 1.1 if dx > 0 else 0.9
             scale_y = 1.1 if dy > 0 else 0.9
             for i in self.space_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx*scale_x, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy*scale_y)
+
+            for i in self.static_objects:
                 if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
                     i.update_pos(-dx*scale_x, -dy*scale_y)
                 elif self.main_obj.touch_boundary_x:

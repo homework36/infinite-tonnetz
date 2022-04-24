@@ -733,7 +733,7 @@ class SidePiece(object):
                     # play note and post note off
                     self.synth.noteon(self.channel, pitch, self.vel)
                     off_tick = tick + self.length_bass * .95 # slightly detached 
-                    self.off_cmd = self.sched.post_at_tick(self._note_off, off_tick, pitch) 
+                    self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
 
         # play top
         if self.idx_top < len(self.notes_top):
@@ -743,7 +743,7 @@ class SidePiece(object):
                 # play note and post note off
                 self.synth.noteon(self.channel, pitch, self.vel)
                 off_tick = tick + length * .95 # slightly detached 
-                self.off_cmd = self.sched.post_at_tick(self._note_off, off_tick, pitch) 
+                self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
 
             # schedule the next note:
             self.idx_top += 1
@@ -785,7 +785,7 @@ class SidePiece(object):
                 cmd.execute() # cause note off to happen right now
         self.on_cmd = None
         self.off_cmd = []
-        self.synth.noteoff(0, self.triad[0])
+        # self.synth.noteoff(0, self.triad[0])
 
 
     def _note_off(self, tick, pitch):

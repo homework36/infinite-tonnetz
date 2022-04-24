@@ -50,7 +50,7 @@ class MainWidget(BaseWidget):
 
         self.add_space_objects()
         self.player = Player(self.starship, self.tonnetz,
-                             self.audio_ctrl, self.space_objects)
+                             self.audio_ctrl, self.space_objects, self.static_objects)
 
     def add_space_objects(self):
         planet_weights = [0.1, 0.3, 0.3, 0.3]
@@ -67,10 +67,6 @@ class MainWidget(BaseWidget):
             self.space_objects.append(SpaceObject(
                 np.random.randint(10, 20), '../img/star.png', 'star'))
 
-        for _ in range(70):  # create round stars
-            self.space_objects.append(SpaceObject(
-                np.random.randint(4, 8), '../img/star2.png', 'star2'))
-
         # create astronaut
         self.space_objects.append(SpaceObject(
             50, '../img/astronaut.png', 'astronaut'))
@@ -78,14 +74,22 @@ class MainWidget(BaseWidget):
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
 
+        self.static_objects = []
+        for _ in range(100):  # create round stars
+            self.static_objects.append(SpaceObject(
+                np.random.randint(4, 8), '../img/star2.png', 'star2'))
+
+        for obj in self.static_objects:
+            self.canvas.add(obj)  # to be changed to anim_group
+
     def on_update(self):
         self.update_pos()
         self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
 
         self.audio_ctrl.on_update()
-        self.player.on_update()
         self.objects.on_update()  # anim group
+        self.player.on_update()
 
         self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
