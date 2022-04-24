@@ -50,7 +50,7 @@ class MainWidget(BaseWidget):
 
         self.add_space_objects()
         self.player = Player(self.starship, self.tonnetz,
-                             self.audio_ctrl, self.space_objects)
+                             self.audio_ctrl, self.space_objects, self.static_objects)
 
     def add_space_objects(self):
         planet_weights = [0.1, 0.3, 0.3, 0.3]
@@ -67,10 +67,6 @@ class MainWidget(BaseWidget):
             self.space_objects.append(SpaceObject(
                 np.random.randint(10, 20), '../img/star.png', 'star'))
 
-        for _ in range(70):  # create round stars
-            self.space_objects.append(SpaceObject(
-                np.random.randint(4, 8), '../img/star2.png', 'star2'))
-
         # create astronaut
         self.space_objects.append(SpaceObject(
             50, '../img/astronaut.png', 'astronaut'))
@@ -78,21 +74,28 @@ class MainWidget(BaseWidget):
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
 
+        self.static_objects = []
+        for _ in range(100):  # create round stars
+            self.static_objects.append(SpaceObject(
+                np.random.randint(4, 8), '../img/star2.png', 'star2'))
+
+        for obj in self.static_objects:
+            self.canvas.add(obj)  # to be changed to anim_group
+
     def on_update(self):
         self.update_pos()
         self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
 
         self.audio_ctrl.on_update()
-        self.player.on_update()
         self.objects.on_update()  # anim group
+        self.player.on_update()
 
         self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)\n'
         # self.info.text += f'{self.starship.rotate.angle}'
         self.info.text += f'{self.objects.size()}'
 
@@ -110,23 +113,46 @@ class MainWidget(BaseWidget):
         # self.curr_z = self.curr_pos['z']
 
     def on_key_down(self, keycode, modifiers):
-        if keycode[1] == 'p':
-            self.audio_ctrl.toggle()
-
+        
         if keycode[1] == 'up':
             self.tonnetz.modify_seq_length(10.)
 
         if keycode[1] == 'down':
             self.tonnetz.modify_seq_length(-10.)
+            
+        # following commands are for debugging
+        # may have conflicts with player
+        if keycode[1] == 'p':
+            self.audio_ctrl.play_astronaut()
+    
+        if keycode[1] == 'q':
+            self.audio_ctrl.pause_astronaut()
 
+      
         if keycode[1] == 'c':
             self.audio_ctrl.play_chromscale()
 
         if keycode[1] == 's':
-            self.audio_ctrl.toggle_seventh()
+            self.audio_ctrl.play_seventh()
+            self.audio_ctrl.play_melody()
         
-        if keycode[1] == 'l':
-            self.audio_ctrl.toggle_sidepiece()
+        if keycode[1] == 'd':
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.stop_melody()
+
+        if keycode[1] == 'm':
+            self.audio_ctrl.play_modescale()
+
+        if keycode[1] == 'n':
+            self.audio_ctrl.stop_modescale()
+
+        
+        if keycode[1] == 'j':
+            self.audio_ctrl.play_jazz()
+        
+        if keycode[1] == 'k':
+            self.audio_ctrl.stop_jazz()
+
 
 
 if __name__ == "__main__":

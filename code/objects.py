@@ -77,9 +77,9 @@ class SpaceObject(InstructionGroup):
                 (1+inner_boundary_factor) * self.h+self.r:
             return True
 
-        # out of bound: reassign a position to pretend that a new object is created
-        self.pos = [np.random.choice(np.concatenate((np.linspace(-0.2, -0.1, 20), np.linspace(1.1, 1.2, 20)), axis=None)) * Window.width,
-                    np.random.choice(np.concatenate((np.linspace(-0.2, -0.1, 20), np.linspace(1.1, 1.2, 20)), axis=None)) * Window.height]
+        # TODO: out of bound: reassign a position to pretend that a new object is created
+        self.pos = [np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.width,
+                    np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.height]
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
 

@@ -39,6 +39,7 @@ class AudioController(object):
         self.mixer = Mixer()
         self.synth_bg = Synth()
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
+        self.synth2 = Synth()
 
         # create TempoMap, AudioScheduler
         self.tempo_map  = SimpleTempoMap(80)
@@ -49,6 +50,7 @@ class AudioController(object):
         self.sched.set_generator(self.mixer)
         self.mixer.add(self.synth_bg)
         self.mixer.add(self.synth)
+        self.mixer.add(self.synth2)
 
         # note parameters
         self.root_pitch = 60
@@ -62,8 +64,9 @@ class AudioController(object):
         self.if_seventh = False
         self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
         self.chord_svth_chan = 0
-        self.chord_audio_svth = chord_audio(self.sched, self.synth, self.chord_svth_chan, (0,49), self.seventh, loop=False)
+        self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (0,49), self.seventh, loop=False)
         self.since_last_trans_count = 100
+        self.backround_sound = True # play background chord at the beginning
     
 
 
@@ -75,18 +78,17 @@ class AudioController(object):
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
         self.arpeg_chan = 2
-        self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
+        self.arpeg = Arpeggiator(self.sched, self.synth2, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
         self.melody_chan = 3
-        self.melody = Arpeggiator2(self.sched, self.synth, notes = self.melodynotes + 12, channel = self.melody_chan, program = (0,53) )   
+        self.melody = Arpeggiator2(self.sched, self.synth2, self.melodynotes + 24, 480, self.melody_chan, program = (0,53) )   
         self.chromscale_chan = 4
         self.chromscale = ChromScaleSeq(self.sched, self.synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
         self.sidepiece_chan = 5
-        self.sidepiece = SidePiece(self.sched, self.synth_bg, self.sidepiece_chan, (0,2), (self.pitch,self.mode))
-        self.playing = False
+        self.sidepiece = SidePiece(self.sched, self.synth, self.sidepiece_chan, (0,2), (self.pitch,self.mode))
 
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
-        self.reading_max_gain = 0.05
+        self.reading_max_gain = 0.15
         self.mixer.add(self.jpn_reading)
         self.mixer.add(self.fr_reading)
         self.jpn_reading.pause()
@@ -114,74 +116,109 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
-        print()
-        print('if seventh',self.if_seventh)
-        print('making trans:',trans)
+        # make prl transformation, record new data
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         self.seventh = np.array([[10,11][self.mode]]) + self.pitch
-        print('after trans',self.key, self.triad, self.mode)
+
+        # set new chord
         self.chord_audio.set_triad(self.triad)
         self.chord_audio_svth.set_triad(self.seventh)
+        self.sidepiece.set_key((self.pitch,self.mode))
+
+        # play chord in the background
+        if self.backround_sound:
+            self.chord_audio.start()
+            if self.if_seventh:
+                self.chord_audio_svth.start()
         
-        print('since last trans',self.since_last_trans_count)
-        print()
-            
-        self.chord_audio.start()
-        if self.if_seventh:
-            self.chord_audio_svth.start()
-        
+        # update notes in other things
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
         self.chromscale.set_pitches(self.chromnotes)
-        self.sidepiece.set_key((self.pitch,self.mode))
+        
+  
+
+    def play_astronaut(self, lan=1):
+        # 1 == french
+        # 0 == japanese
+        if lan == 1:
+            if self.fr_reading.paused:
+                self.fr_reading.play()
+        else:
+            if self.jpn_reading.paused:
+                self.jpn_reading.play()
     
+    def pause_astronaut(self, lan=1):
+        if not self.fr_reading.paused:
+                self.fr_reading.pause()
+        if not self.jpn_reading.paused:
+                self.jpn_reading.pause()
+
+    def play_seventh(self):
+        if not self.if_seventh:
+            self.if_seventh = True
+
+    def pause_seventh(self):
+        if self.if_seventh:
+            self.if_seventh = False
+
     def toggle_seventh(self):
         if self.if_seventh:
             self.if_seventh = False
         else:
             self.if_seventh = True
     
-    def toggle_sidepiece(self):
-        if self.sidepiece.playing:
-            self.sidepiece.stop()
-        else:
+    def play_jazz(self):
+        if not self.sidepiece.playing:
+            self.backround_sound = False
             self.sidepiece.start()
 
+    def stop_jazz(self):
+        if self.sidepiece.playing:
+            self.backround_sound = True
+            self.sidepiece.stop()
 
-    # start / stop the song
-    def toggle(self):
-        
-        if self.playing:
-            # self.chord_audio.stop()
-            self.arpeg.stop()
-            # self.melody.stop()
-            self.jpn_reading.pause()
-            self.playing = False
-        else:
-            # self.chord_audio.start()
+    def play_chromscale(self):
+        self.chromscale.start()
+        # chromscale will end automatically
+
+    def play_melody(self):
+        if not self.melody.playing:
+            self.melody.start()
+    
+    def stop_melody(self):
+        if self.melody.playing:
+            self.melody.stop()
+    
+    def play_modescale(self):
+        if not self.arpeg.playing:
             self.arpeg.start()
-            # self.melody.start()
-            self.jpn_reading.play()
-            self.playing = True
+    
+    def stop_modescale(self):
+        if self.arpeg.playing:
+            self.arpeg.stop()
 
     # needed to update audio
     def on_update(self):
         self.since_last_trans_count += 1
         self.audio.on_update()
 
-    def adjust_volume(self ,chan_num, val):
+    def adjust_volume(self, synth, chan_num, val):
         '''chan_num: channel number, can pass in self.xxxchan
            val: value of volumn, can use (third arg is the val value, 
            but probably want other max and min)
            val = int(np.interp(pt[0], (0, 1), (0, 127)))'''
-        self.synth.cc(chan_num,7,val)
+        synth.cc(chan_num,7,val)
         # self.synth.cc(chan_num,11,val) might be better?
     
-    def play_chromscale(self):
-        self.chromscale.start()
+    def adjust_astronaut(self,vel):
+        self.reading_max_gain = max(0.01,min(0.15,vel))
+        self.jpn_reading.set_gain(self.reading_max_gain)
+        self.fr_reading.set_gain(self.reading_max_gain)
+
 
 
 # no looping
@@ -485,7 +522,7 @@ class Arpeggiator(object):
             return idx - 1
     
 class Arpeggiator2(object):
-    def __init__(self, sched, synth, notes=None, length=480, channel=0, program=(0, 40)):
+    def __init__(self, sched, synth, notes, length, channel, program=(0, 40)):
         
         super(Arpeggiator2, self).__init__()
 
@@ -507,7 +544,7 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 20
+        self.vel = 25
         self.lastpitch = None
         self.jump = 0.5
       
@@ -536,9 +573,7 @@ class Arpeggiator2(object):
 
 
     def _noteon(self,tick):
-        if len(self.notes) == 0:
-            return
-
+  
         pitch = self.nextpitch()
         self.lastpitch = pitch   
         self.synth.noteon(self.channel,pitch,self.vel) 
@@ -577,8 +612,6 @@ class Arpeggiator2(object):
         self.synth.noteoff(self.channel,pitch)
 
     def start(self):
-        if self.notes is None:
-            return 
         if self.playing:
             return 
         if len(self.notes) == 0:
@@ -588,7 +621,6 @@ class Arpeggiator2(object):
         self.synth.program(self.channel,self.program[0],self.program[1])
         tick = self.sched.get_tick()
 
-        # start with organ
         noteplay_original = self.length + tick
         noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
         self.on_cmd = self.sched.post_at_tick(self._noteon, noteplay)
@@ -733,7 +765,7 @@ class SidePiece(object):
                     # play note and post note off
                     self.synth.noteon(self.channel, pitch, self.vel)
                     off_tick = tick + self.length_bass * .95 # slightly detached 
-                    self.off_cmd = self.sched.post_at_tick(self._note_off, off_tick, pitch) 
+                    self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
 
         # play top
         if self.idx_top < len(self.notes_top):
@@ -743,7 +775,7 @@ class SidePiece(object):
                 # play note and post note off
                 self.synth.noteon(self.channel, pitch, self.vel)
                 off_tick = tick + length * .95 # slightly detached 
-                self.off_cmd = self.sched.post_at_tick(self._note_off, off_tick, pitch) 
+                self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
 
             # schedule the next note:
             self.idx_top += 1
@@ -785,7 +817,7 @@ class SidePiece(object):
                 cmd.execute() # cause note off to happen right now
         self.on_cmd = None
         self.off_cmd = []
-        self.synth.noteoff(0, self.triad[0])
+        # self.synth.noteoff(0, self.triad[0])
 
 
     def _note_off(self, tick, pitch):
