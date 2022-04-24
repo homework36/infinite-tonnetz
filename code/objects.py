@@ -54,6 +54,7 @@ class SpaceObject(InstructionGroup):
         self.pos[1] += dy
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
+        self.on_update(0)
 
     def on_resize(self, win_size):
         self.r = self.r / self.w * win_size[0]
@@ -76,9 +77,9 @@ class SpaceObject(InstructionGroup):
                 (1+inner_boundary_factor) * self.h+self.r:
             return True
 
-        # out of bound: reassign a position to pretend that a new object is created
-        self.pos = [np.random.choice(np.concatenate((np.linspace(-0.2, -0.1, 20), np.linspace(1.1, 1.2, 20)), axis=None)) * Window.width,
-                    np.random.choice(np.concatenate((np.linspace(-0.2, -0.1, 20), np.linspace(1.1, 1.2, 20)), axis=None)) * Window.height]
+        # TODO: out of bound: reassign a position to pretend that a new object is created
+        self.pos = [np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.width,
+                    np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.height]
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
 
@@ -128,7 +129,7 @@ class PhysBubble(InstructionGroup):
         return [self.pos_x, self.pos_y]
 
     def on_resize(self, win_size):
-        self.radius = win_size[0] // 30
+        self.radius = win_size[0] // 25
         self.circle.csize = (2 * self.radius, 2 * self.radius)
 
     def get_moving_dist(self):
