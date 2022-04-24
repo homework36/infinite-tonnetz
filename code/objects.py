@@ -1,6 +1,5 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
-
 from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
 from kivy.core.window import Window
 from kivy.clock import Clock as kivyClock
@@ -29,8 +28,9 @@ class SpaceObject(InstructionGroup):
             self.color.a = np.random.random()
 
         self.r = r
-        self.vel = np.array((np.random.uniform(-20, 20),
+        self.vel = np.array((np.random.uniform(-10, 10),
                             np.random.uniform(-10, 10)), dtype=float)
+        # self.vel = np.array((0,0), dtype=float)
         self.pos = [np.random.uniform(-0.2, 1.2) * Window.width,
                     np.random.uniform(-0.2, 1.2) * Window.height]
         self.rect = CRectangle(cpos=self.pos, csize=(2*r, 2*r), segments=40)
@@ -86,7 +86,7 @@ class SpaceObject(InstructionGroup):
 
 
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1,1,1), callback=None, in_boundary=None):
+    def __init__(self, pos, r, color=(1, 1, 1), callback=None, in_boundary=None):
         super(PhysBubble, self).__init__()
 
         self.radius = r

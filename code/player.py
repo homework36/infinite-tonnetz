@@ -1,5 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
+import numpy as np
 
 
 class Player(object):
@@ -14,30 +15,45 @@ class Player(object):
     def on_update(self):
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
-        
-        for obj in self.space_objects.values():
-            for i in obj:
-                obj_x, obj_y = i.get_curr_pos()
-                obj_size = i.r
-                # if main_x + main_size >= obj_x - obj_size:
-                #     print(i.type, 'right')
-                # if main_x - main_size <= obj_x + obj_size:
-                #     print(i.type, 'left')
-                # if main_y + main_size >= obj_y - obj_size:
-                #     print(i.type, 'bottom')
-                # if main_y - main_size <= obj_y + obj_size:
-                #     print(i.type, 'up')
+
+        for i in self.space_objects:
+            obj_x, obj_y = i.get_curr_pos()
+            obj_size = i.r
+            type = i.type
+            dist = np.sqrt((main_x - obj_x)**2 + (main_y - obj_y)**2)
+            touch_dist = (main_size + obj_size)
+            if type == 'planet':
+                if dist < touch_dist:
+                    self.audio_ctrl.play_chromscale()
+
+            elif type == 'astronaut':  # play recording
+                if dist < touch_dist * 2:
+                    if not self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+                        self.audio_ctrl.reading_max_gain = 0.05 * \
+                            (1.5-dist / touch_dist)
+                elif dist < touch_dist * 3:
+                    if not self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+                        self.audio_ctrl.reading_max_gain = 0.05 * \
+                            (dist / touch_dist / 3 * 0.05)
+                else:
+                    if self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+
+            elif type == 'star':  # play seventh note
+                if dist < touch_dist:
+                    self.audio_ctrl.toggle_seventh()
 
         # move space objects relatively as main object moves
         if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
             dx, dy = self.main_obj.get_moving_dist()
             scale_x = 1.1 if dx > 0 else 0.9
             scale_y = 1.1 if dy > 0 else 0.9
-            for obj in self.space_objects.values():
-                for i in obj:
-                    if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
-                        i.update_pos(-dx*scale_x, -dy*scale_y)
-                    elif self.main_obj.touch_boundary_x:
-                        i.update_pos(-dx*scale_x, 0)
-                    elif self.main_obj.touch_boundary_y:
-                        i.update_pos(0, -dy*scale_y)
+            for i in self.space_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx*scale_x, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy*scale_y)
