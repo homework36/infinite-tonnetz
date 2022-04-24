@@ -21,6 +21,7 @@ from imslib.synth import Synth
 from imslib.mixer import Mixer
 from imslib.wavegen import WaveGenerator
 from imslib.wavesrc import WaveBuffer, WaveFile
+from imslib.noteseq import NoteSequencer
 
 # from random import randint, random
 import numpy as np
@@ -29,7 +30,7 @@ from helper_function import *
 
 from pedalboard import Pedalboard, Reverb
 
-
+Chromatics = np.array([12-i for i in range(13)]+[-24]) 
 
 class AudioController(object):
     def __init__(self):
@@ -38,7 +39,6 @@ class AudioController(object):
         self.mixer = Mixer()
         self.synth_bg = Synth()
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
-
 
         # create TempoMap, AudioScheduler
         self.tempo_map  = SimpleTempoMap(80)
@@ -57,8 +57,13 @@ class AudioController(object):
         self.vel = 40
         self.triad = np.array([[0,3,7],[0,4,7]][self.mode]) + self.pitch
         self.triad = open_triad(self.triad)
+        self.seventh = np.array([[10,11][self.mode]]) + self.pitch
+        # print('seventh',self.seventh)
+        self.if_seventh = False
         self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
+        self.chord_audio_svth = chord_audio(self.sched, self.synth, 0, (0,49), self.seventh, loop=False)
         self.since_last_trans_count = 100
+    
 
 
         self.keys = ['C','C#','D','Eb','E','F','F#',\
@@ -68,8 +73,12 @@ class AudioController(object):
         self.pitchlists = [(0, 2, 3, 5, 7, 8, 11, 12),\
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
-        self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, channel = 2, program = (0,47) )  
-        self.melody = Arpeggiator2(self.sched, self.synth_bg, notes=self.melodynotes+24, length = 960, channel = 3, program = (0,53) )   
+        self.arpeg_chan = 2
+        self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
+        self.melody_chan = 3
+        self.melody = Arpeggiator2(self.sched, self.synth, notes = self.melodynotes + 12, channel = self.melody_chan, program = (0,53) )   
+        self.chromscale_chan = 4
+        self.chromscale = ChromScaleSeq(self.sched, self.synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
 
         self.playing = False
 
@@ -85,7 +94,14 @@ class AudioController(object):
     
     def make_notes(self):
         self.melodynotes = self.pitchlists[self.mode] + self.triad[0] 
-        self.flashynotes = np.array([self.melodynotes[i] for i in [0,2,3,4,3,2]]) + 12 * 2
+        if self.mode == 1:
+            randind = np.random.choice([0,3,4], p=[.8,.1,.1])
+        else:
+            randind = np.random.choice([1,2,5,6], p=[.1,.1,.6,.2])
+        temp = scalelistwh[randind]
+        self.flashynotes = temp + self.pitch % 12 + 48
+        self.chromnotes = self.pitch % 12 + 72 + Chromatics
+  
         
 
     def melody_jump(self,num):
@@ -97,20 +113,32 @@ class AudioController(object):
 
     def make_prl(self, trans):
         print()
+        print('if seventh',self.if_seventh)
         print('making trans:',trans)
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
+        self.seventh = np.array([[10,11][self.mode]]) + self.pitch
         print('after trans',self.key, self.triad, self.mode)
         self.chord_audio.set_triad(self.triad)
+        self.chord_audio_svth.set_triad(self.seventh)
         print('since last trans',self.since_last_trans_count)
         print()
             
         self.chord_audio.start()
+        if self.if_seventh:
+            self.chord_audio_svth.start()
         
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
+        self.chromscale.set_pitches(self.chromnotes)
+    
+    def toggle_seventh(self):
+        if self.if_seventh:
+            self.if_seventh = False
+        else:
+            self.if_seventh = True
         
 
     # start / stop the song
@@ -134,18 +162,22 @@ class AudioController(object):
         self.since_last_trans_count += 1
         self.audio.on_update()
 
+    def adjust_volume(self ,chan_num, val):
+        '''chan_num: channel number, can pass in self.xxxchan
+           val: value of volumn, can use (third arg is the val value, 
+           but probably want other max and min)
+           val = int(np.interp(pt[0], (0, 1), (0, 127)))'''
+        self.synth.cc(chan_num,7,val)
+        # self.synth.cc(chan_num,11,val) might be better?
+    
+    def play_chromscale(self):
+        self.chromscale.start()
+
+
 # no looping
 class chord_audio(object):
-    def __init__(self, sched, synth, channel, program, triad, loop=False):
-        """
-        :param sched: The Scheduler object. Should keep track of ticks and
-            allow commands to be scheduled.
-        :param synth: The Synthesizer object that will generate audio.
-        :param channel: The channel to use for playing audio.
-        :param program: A tuple (bank, preset). Allows an instrument to be specified.
-        :param chord: The chord to play, a list of pitches.
-        :param loop: whether to loop the chord
-        """
+    def __init__(self, sched, synth, channel, program, triad, loop=False, vel = 50):
+   
         super(chord_audio, self).__init__()
         self.sched = sched
         self.synth = synth
@@ -155,7 +187,7 @@ class chord_audio(object):
         self.triad = triad
         self.playing = False
         self.length = 480*2
-        self.vel = 50
+        self.vel = vel
 
         self.on_cmd = None
         self.off_cmd = []
@@ -222,17 +254,16 @@ class chord_audio(object):
     def _note_on(self, tick):
 
         self.off_cmd = []
-        # play new note if available
-        bass, third, fifth = self.triad
+
         # play note and post note off
-        self.synth.noteon(self.channel, bass, self.vel)
-        self.synth.noteon(self.channel, third, self.vel)
-        self.synth.noteon(self.channel, fifth, self.vel)
+        for note in self.triad:
+            self.synth.noteon(self.channel, note, self.vel)
+    
 
         off_tick = tick + self.length * .95 # slightly detached 
-        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, bass)) 
-        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, third)) 
-        self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, fifth)) 
+        for note in self.triad:
+            self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, note)) 
+        
 
         if self.loop:
         # schedule the next note:
@@ -244,7 +275,6 @@ class chord_audio(object):
         self.synth.noteoff(self.channel, pitch)
 
 
-        
 
 class SynthEffect(Synth):
     def __init__(self, filepath = None, gain = 0.8, effect = None):
@@ -286,7 +316,7 @@ class SynthEffect(Synth):
 
 
 class Arpeggiator(object):
-    def __init__(self, sched, synth, notes, length = 240, channel=2, program=(0, 40)):
+    def __init__(self, sched, synth, notes, length = 120, channel=2, program=(0, 40), vel = 45, rest=False):
         super(Arpeggiator, self).__init__()
 
         self.playing = False
@@ -300,8 +330,8 @@ class Arpeggiator(object):
         self.notes = notes
         self.length = length
         self.articulation = 1
-        self.playmode = self._up
-        self.playmodename = 'up'
+        self.playmode = self._updown
+        self.playmodename = 'updown'
         self.goingup = True
         self.ind = self.playmode(0)
 
@@ -310,10 +340,11 @@ class Arpeggiator(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 30
+        self.vel = vel
 
         self.lastpitch = None
         self.jump = 0.5
+        self.random_stop = rest
     
     def change_channel_vol(self,in_num):
         if in_num == 1:
@@ -360,7 +391,8 @@ class Arpeggiator(object):
     
     # pitches is a list of MIDI pitch values. For example [60 64 67 72]
     def set_pitches(self, pitches):
-        self.notes = np.sort(np.array(pitches))
+        # self.notes = np.sort(np.array(pitches))
+        self.notes = pitches
         while self.ind >= len(self.notes):
             self.ind = len(self.notes) - 1
 
@@ -386,8 +418,12 @@ class Arpeggiator(object):
     def _noteon(self,tick):
         if len(self.notes) == 0:
             return
-        
-        pitch = self.notes[self.ind]   
+        if self.random_stop and np.random.normal(0,0.5)<1:
+            pitch = int(self.notes[self.ind])  
+            # to next
+            self.ind = self.playmode(self.ind) 
+        else:
+            pitch = int(0)
         self.synth.noteon(self.channel,pitch,self.vel) 
 
         noteplay_original = self.length + tick
@@ -401,8 +437,7 @@ class Arpeggiator(object):
         # schedule the noteoff
         self.off_cmd = self.sched.post_at_tick(self._noteoff, notestop, pitch)
 
-        # to next
-        self.ind = self.playmode(self.ind)
+            
     
     def _noteoff(self,tick,pitch):
         self.synth.noteoff(self.channel,pitch)
@@ -590,3 +625,48 @@ class Arpeggiator2(object):
     
     ############################## end of redundant part
 
+class ChromScaleSeq(NoteSequencer):
+    def __init__(self, sched, synth, channel, program, notes, vel = 40, loop=True, length = 48):
+        super(NoteSequencer, self).__init__()
+        self.sched = sched
+        self.synth = synth
+        self.channel = channel
+        self.program = program
+
+        self.notes = notes
+        self.loop = loop
+        self.playing = False
+
+        self.on_cmd = None
+        self.off_cmd = None
+        self.idx = 0
+        self.vel = vel
+        self.synth.cc(self.channel,1,50)
+        self.length = length
+
+    def _note_on(self, tick):
+        # if looping, go back to beginning
+        if self.loop and self.idx >= len(self.notes):
+            self.idx = 0
+
+        # play new note if available
+        if self.idx < len(self.notes):
+            pitch = self.notes[self.idx]
+            if pitch != 0: # pitch 0 is a rest
+                # play note and post note off
+                self.synth.noteon(self.channel, pitch, self.vel)
+                off_tick = tick + self.length * .95 # slightly detached 
+                self.off_cmd = self.sched.post_at_tick(self._note_off, off_tick, pitch) 
+
+            # schedule the next note:
+            self.idx += 1
+            self.on_cmd = self.sched.post_at_tick(self._note_on, tick + self.length)
+        else:
+            self.playing = False
+    
+    def set_pitches(self,notes):
+        self.notes = notes
+
+    def set_length(self,val):
+        if 96>= self.length >= 24:
+            self.length += val 
