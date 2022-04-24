@@ -1,36 +1,59 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
-
-from imslib.core import BaseWidget, run, lookup
-from imslib.audio import Audio
-from imslib.mixer import Mixer
-from imslib.wavegen import WaveGenerator
-from imslib.wavesrc import WaveBuffer, WaveFile
-from imslib.noteseq import NoteSequencer
-from imslib.synth import Synth
-from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
-from imslib.gfxutil import topleft_label, resize_topleft_label, CLabelRect, CRectangle
-from imslib.kivyparticle import ParticleSystem
-from kivy.graphics.instructions import InstructionGroup
-from kivy.graphics import Color, Ellipse, Line, Rectangle,PushMatrix, PopMatrix, Translate, Rotate
-from kivy.core.window import Window
-from kivy.uix.image import Image
-from numpy import random as nprd
-from kivy import metrics
-
-
-
+import numpy as np
 
 
 class Player(object):
-    def __init__(self, bubble, tonnetz, audio_ctrl):
+    def __init__(self, main_obj, tonnetz, audio_ctrl, space_objects):
         super(Player, self).__init__()
         self.tonnetz = tonnetz
         self.audio_ctrl = audio_ctrl
-        self.bubble = bubble
+        self.main_obj = main_obj
+        self.space_objects = space_objects
         self.on_update()
-        
- 
+
     def on_update(self):
-        pass
-    
+        main_x, main_y = self.main_obj.get_curr_pos()
+        main_size = self.main_obj.radius
+
+        for i in self.space_objects:
+            obj_x, obj_y = i.get_curr_pos()
+            obj_size = i.r
+            type = i.type
+            dist = np.sqrt((main_x - obj_x)**2 + (main_y - obj_y)**2)
+            touch_dist = (main_size + obj_size)
+            if type == 'planet':
+                if dist < touch_dist:
+                    self.audio_ctrl.play_chromscale()
+
+            elif type == 'astronaut':  # play recording
+                if dist < touch_dist * 2:
+                    if not self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+                        self.audio_ctrl.reading_max_gain = 0.05 * \
+                            (1.5-dist / touch_dist)
+                elif dist < touch_dist * 3:
+                    if not self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+                        self.audio_ctrl.reading_max_gain = 0.05 * \
+                            (dist / touch_dist / 3 * 0.05)
+                else:
+                    if self.audio_ctrl.playing:
+                        self.audio_ctrl.toggle()
+
+            elif type == 'star':  # play seventh note
+                if dist < touch_dist:
+                    self.audio_ctrl.toggle_seventh()
+
+        # move space objects relatively as main object moves
+        if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
+            dx, dy = self.main_obj.get_moving_dist()
+            scale_x = 1.1 if dx > 0 else 0.9
+            scale_y = 1.1 if dy > 0 else 0.9
+            for i in self.space_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx*scale_x, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy*scale_y)
