@@ -113,13 +113,15 @@ class MainWidget(BaseWidget):
         # self.curr_z = self.curr_pos['z']
 
     def on_key_down(self, keycode, modifiers):
+        
         if keycode[1] == 'up':
             self.tonnetz.modify_seq_length(10.)
 
         if keycode[1] == 'down':
             self.tonnetz.modify_seq_length(-10.)
-
-
+            
+        # following commands are for debugging
+        # may have conflicts with player
         if keycode[1] == 'p':
             self.audio_ctrl.play_astronaut()
     

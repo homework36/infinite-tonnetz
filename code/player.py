@@ -18,7 +18,7 @@ class Player(object):
     def on_update(self):
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
-
+        self.near_planet = 0
         for i in self.space_objects:
             obj_x, obj_y = i.get_curr_pos()
             obj_size = i.r
@@ -29,7 +29,7 @@ class Player(object):
             if type == 'star':
                 if dist < touch_dist:
                     vel = int(np.interp(dist, (0, touch_dist), (60,15)))
-                    self.audio_ctrl.adjust_volume(self.audio_ctrl.chromscale_chan,vel)
+                    self.audio_ctrl.adjust_volume(self.audio_ctrl.synth,self.audio_ctrl.chromscale_chan,vel)
                     self.audio_ctrl.play_chromscale()
 
             elif type == 'astronaut':  # play recording
@@ -42,18 +42,21 @@ class Player(object):
                 pass
 
             elif type == 'planet':  # play seventh note
-                if dist <= touch_dist:
+                if dist <= touch_dist * 2:
                     self.near_planet += 1
+                    self.audio_ctrl.play_seventh()
+                    self.audio_ctrl.play_melody()
+
+            elif type == 'splanet':
+                if dist <= touch_dist * 2:
+                    self.audio_ctrl.play_jazz()
                 else:
-                    self.near_planet -= 1
-                    self.near_planet = max(0,self.near_planet)
-            
-        if self.near_planet > 0:
-            self.audio_ctrl.play_seventh()
-            self.audio_ctrl.play_melody()
-        else:
+                    self.audio_ctrl.stop_jazz()
+    
+        if self.near_planet == 0:
             self.audio_ctrl.pause_seventh()
             self.audio_ctrl.stop_melody()
+    
 
         # move space objects relatively as main object moves
         if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:

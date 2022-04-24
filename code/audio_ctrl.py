@@ -39,6 +39,7 @@ class AudioController(object):
         self.mixer = Mixer()
         self.synth_bg = Synth()
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
+        self.synth2 = Synth()
 
         # create TempoMap, AudioScheduler
         self.tempo_map  = SimpleTempoMap(80)
@@ -49,6 +50,7 @@ class AudioController(object):
         self.sched.set_generator(self.mixer)
         self.mixer.add(self.synth_bg)
         self.mixer.add(self.synth)
+        self.mixer.add(self.synth2)
 
         # note parameters
         self.root_pitch = 60
@@ -76,9 +78,9 @@ class AudioController(object):
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
         self.arpeg_chan = 2
-        self.arpeg = Arpeggiator(self.sched, self.synth, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
+        self.arpeg = Arpeggiator(self.sched, self.synth2, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
         self.melody_chan = 3
-        self.melody = Arpeggiator2(self.sched, self.synth, self.melodynotes + 12, 480, self.melody_chan, program = (0,53) )   
+        self.melody = Arpeggiator2(self.sched, self.synth2, self.melodynotes + 24, 480, self.melody_chan, program = (0,53) )   
         self.chromscale_chan = 4
         self.chromscale = ChromScaleSeq(self.sched, self.synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
         self.sidepiece_chan = 5
@@ -204,12 +206,12 @@ class AudioController(object):
         self.since_last_trans_count += 1
         self.audio.on_update()
 
-    def adjust_volume(self ,chan_num, val):
+    def adjust_volume(self, synth, chan_num, val):
         '''chan_num: channel number, can pass in self.xxxchan
            val: value of volumn, can use (third arg is the val value, 
            but probably want other max and min)
            val = int(np.interp(pt[0], (0, 1), (0, 127)))'''
-        self.synth.cc(chan_num,7,val)
+        synth.cc(chan_num,7,val)
         # self.synth.cc(chan_num,11,val) might be better?
     
     def adjust_astronaut(self,vel):
@@ -542,7 +544,7 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 50
+        self.vel = 25
         self.lastpitch = None
         self.jump = 0.5
       
@@ -571,13 +573,9 @@ class Arpeggiator2(object):
 
 
     def _noteon(self,tick):
-        print('melody noteon')
-        if len(self.notes) == 0:
-            return
-
+  
         pitch = self.nextpitch()
         self.lastpitch = pitch   
-        print('melody scheduled note on')
         self.synth.noteon(self.channel,pitch,self.vel) 
 
         noteplay_original = self.length + tick
@@ -614,7 +612,6 @@ class Arpeggiator2(object):
         self.synth.noteoff(self.channel,pitch)
 
     def start(self):
-        print('melody start called',self.playing,self.notes)
         if self.playing:
             return 
         if len(self.notes) == 0:
