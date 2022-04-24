@@ -20,16 +20,12 @@ from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quant
 from imslib.core import BaseWidget, run
 from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
 
-
-from random import randint, random
 import numpy as np
-# from pyrsistent import b
 from OSCReader import OSCReader
-from random import randint
 from tonnetz import Tonnetz
 from audio_ctrl import AudioController
 from player import Player
-from objects import PhysBubble
+from objects import *
 
 '''
 Please make sure to quit ZIG Indicator on the computer, otherwise 
@@ -42,7 +38,7 @@ Please have ZIG SIM open all the time on the phone and stay on the tab "Start"
 class MainWidget(BaseWidget):
     def __init__(self, ip, port):
         super(MainWidget, self).__init__()
-        width, height = Window.width, Window.height
+        Window.clearcolor = (0.062, 0.023, 0.219, 0.6)
 
         self.info = topleft_label()
         self.add_widget(self.info)
@@ -58,12 +54,11 @@ class MainWidget(BaseWidget):
         self.tonnetz = Tonnetz(600,callback=self.audio_ctrl.make_prl)
         self.canvas.add(self.tonnetz)
         self.starship = PhysBubble(pos=(Window.width/2, Window.height/2), 
-                                   r=Window.width/50, 
+                                   r=Window.width/30, 
                                    color=(1,1,1),
                                    callback=self.tonnetz.on_boundary,
                                    in_boundary=self.tonnetz.within_boundary)
         self.tonnetz.import_obj(self.starship)
-        
         
 
         # AnimGroup handles drawing, animation, and object lifetime management
@@ -71,8 +66,29 @@ class MainWidget(BaseWidget):
         self.canvas.add(self.objects)
         self.objects.add(self.starship)
 
+        self.add_space_objects()
+        self.player = Player(self.starship, self.tonnetz, self.audio_ctrl, self.space_objects)
+
+    def add_space_objects(self):
+        planet_weights = [0.1, 0.3, 0.3, 0.3]
+        planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
+
+        self.space_objects = []
+
+        for _ in range(5):
+            rand_planet = np.random.choice(planet_choices, p=planet_weights)
+            self.space_objects.append(SpaceObject(np.random.randint(20, 50), '../img/'+rand_planet+'.png', 'planet'))
         
-        self.player = Player(self.starship, self.tonnetz, self.audio_ctrl)
+        for _ in range(4):
+            self.space_objects.append(SpaceObject(np.random.randint(10,20), '../img/star1.png', 'star'))
+
+        for _ in range(20):
+            self.space_objects.append(SpaceObject(np.random.randint(5,10), '../img/star2.png', 'star2'))
+        
+        self.space_objects.append(SpaceObject(50, '../img/astronaut.png', 'astronaut'))
+
+        for i in self.space_objects:
+            self.canvas.add(i) # to be changed to anim_group
 
     def on_update(self):
         # self.player.on_update()
@@ -82,7 +98,8 @@ class MainWidget(BaseWidget):
         self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         self.objects.on_update()
-
+        self.player.on_update()
+        
         self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
@@ -95,6 +112,8 @@ class MainWidget(BaseWidget):
         self.tonnetz.on_resize(win_size)
         resize_topleft_label(self.info)
         self.starship.on_resize(win_size)
+        for i in self.space_objects:
+            i.on_resize(win_size)
 
     def update_pos(self):
         response = self.reader.get_pos()

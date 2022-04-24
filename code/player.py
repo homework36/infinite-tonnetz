@@ -23,14 +23,23 @@ from kivy import metrics
 
 
 class Player(object):
-    def __init__(self, bubble, tonnetz, audio_ctrl):
+    def __init__(self, main_obj, tonnetz, audio_ctrl, space_objects):
         super(Player, self).__init__()
         self.tonnetz = tonnetz
         self.audio_ctrl = audio_ctrl
-        self.bubble = bubble
+        self.main_obj = main_obj
+        self.space_objects = space_objects
         self.on_update()
         
  
     def on_update(self):
-        pass
-    
+        if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
+            dx, dy = self.main_obj.get_moving_dist()
+            for i in self.space_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx, -dy)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy)
+        
