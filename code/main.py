@@ -124,6 +124,9 @@ class MainWidget(BaseWidget):
 
         if keycode[1] == 's':
             self.audio_ctrl.toggle_seventh()
+        
+        if keycode[1] == 'l':
+            self.audio_ctrl.toggle_sidepiece()
 
 
 if __name__ == "__main__":
