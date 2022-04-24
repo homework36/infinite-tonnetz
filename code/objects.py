@@ -86,7 +86,7 @@ class SpaceObject(InstructionGroup):
 
 
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1, 1, 1), callback=None, in_boundary=None):
+    def __init__(self, pos, r, color=(1,1,1), callback=None, in_boundary=None):
         super(PhysBubble, self).__init__()
 
         self.radius = r

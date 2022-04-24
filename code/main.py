@@ -60,7 +60,6 @@ class MainWidget(BaseWidget):
                                    in_boundary=self.tonnetz.within_boundary)
         self.tonnetz.import_obj(self.starship)
         
-
         # AnimGroup handles drawing, animation, and object lifetime management
         self.objects = AnimGroup()
         self.canvas.add(self.objects)
@@ -100,6 +99,7 @@ class MainWidget(BaseWidget):
 
     def on_update(self):
         self.update_pos()
+        self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
 
         self.audio_ctrl.on_update()
@@ -133,8 +133,19 @@ class MainWidget(BaseWidget):
     
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == 'p':
-            self.audio_ctrl.toggle()       
+            self.audio_ctrl.toggle()   
 
+        if keycode[1] == 'up':
+            self.tonnetz.modify_seq_length(10.)    
+        
+        if keycode[1] == 'down':
+            self.tonnetz.modify_seq_length(-10.)    
+
+        if keycode[1] == 'c':
+            self.audio_ctrl.play_chromscale()
+        
+        if keycode[1] == 's':
+            self.audio_ctrl.toggle_seventh()
 
 if __name__ == "__main__":
     # pass in which MainWidget to run as a command-line arg

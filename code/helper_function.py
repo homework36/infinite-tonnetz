@@ -104,3 +104,31 @@ def make_trans(mode,triad,key,trans='p',print=False):
     # assert np.array_equal(triad % 12, calc_triad % 12)
 
     return mode, open_triad(triad), key
+
+
+scale_dict = {'Ionian': 0, 
+              'Dorian': 1, 
+              'Phrygian': 2, 
+              'Lydian': 3,
+              'Mixolydian': 4,
+              'Aeolian': 5, 
+              'Locrain': 6}
+
+minor_seventh_dict = {'minor': np.array([0, 3, 7, 10]),
+                'diminished':  np.array([0, 3, 6, 9]),
+                'hdiminished':  np.array([0, 3, 6, 10]),
+                'minormajor':  np.array([0, 3, 7, 11])}
+
+major_seventh_dict = {'dominant':  np.array([0, 4, 7, 10]),
+                'major':  np.array([0, 4, 7, 11]),
+                'augmented':  np.array([0, 4, 8, 11])}
+
+base_scale = [0, 2, 4, 5, 7, 9, 11]
+scalelist = [np.concatenate((np.array(base_scale[i:])-base_scale[i],\
+    np.array(base_scale[:i])-base_scale[i]+12,np.array([12]))) for i in range(7)]
+scalelistwh = scalelist #+ [np.array([0, 2, 3, 5, 7, 8, 11, 12])]
+minorscales_ind = [1,2,5,6]
+majorscales_ind = [0,3,4]
+
+minor7list = list(minor_seventh_dict.values())
+major7list = list(major_seventh_dict.values())
