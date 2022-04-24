@@ -73,47 +73,57 @@ class MainWidget(BaseWidget):
         planet_weights = [0.1, 0.3, 0.3, 0.3]
         planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
 
-        self.space_objects = []
+        self.space_objects = {}
 
-        for _ in range(5):
+        temp = []
+        for _ in range(5): # create planets
             rand_planet = np.random.choice(planet_choices, p=planet_weights)
-            self.space_objects.append(SpaceObject(np.random.randint(20, 50), '../img/'+rand_planet+'.png', 'planet'))
-        
-        for _ in range(4):
-            self.space_objects.append(SpaceObject(np.random.randint(10,20), '../img/star1.png', 'star'))
+            temp.append(SpaceObject(np.random.randint(20, 50), '../img/'+rand_planet+'.png', 'planet'))
+            self.space_objects['planet'] = temp
 
-        for _ in range(20):
-            self.space_objects.append(SpaceObject(np.random.randint(5,10), '../img/star2.png', 'star2'))
-        
-        self.space_objects.append(SpaceObject(50, '../img/astronaut.png', 'astronaut'))
+        temp = []
+        for _ in range(10): # create stars
+            temp.append(SpaceObject(np.random.randint(10,20), '../img/star.png', 'star'))
+            self.space_objects['star'] = temp
 
-        for i in self.space_objects:
-            self.canvas.add(i) # to be changed to anim_group
+        temp = []
+        for _ in range(30): # create round stars
+            temp.append(SpaceObject(np.random.randint(5,10), '../img/star2.png', 'star2'))
+            self.space_objects['star2'] = temp
+
+        # create astronaut
+        self.space_objects['astronaut'] = [SpaceObject(50, '../img/astronaut.png', 'astronaut')]
+
+        for i in self.space_objects.values():
+            for obj in i:
+                self.objects.add(obj) # to be changed to anim_group
 
     def on_update(self):
-        # self.player.on_update()
-        self.audio_ctrl.on_update()
-
         self.update_pos()
-        self.tonnetz.on_update()
         self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
-        self.objects.on_update()
+
+        self.audio_ctrl.on_update()
+        self.tonnetz.on_update()
+        self.objects.on_update() # anim group
         self.player.on_update()
-        
+
         self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
         self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)\n'
-        self.info.text += f'{self.starship.rotate.angle}'
+        # self.info.text += f'{self.starship.rotate.angle}'
+        self.info.text += f'{self.objects.size()}'
         
+
     def on_resize(self,win_size):
         self.tonnetz.on_resize(win_size)
         resize_topleft_label(self.info)
         self.starship.on_resize(win_size)
-        for i in self.space_objects:
-            i.on_resize(win_size)
+        for obj in self.space_objects.values():
+            for i in obj:
+                i.on_resize(win_size)
 
     def update_pos(self):
         response = self.reader.get_pos()
