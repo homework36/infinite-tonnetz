@@ -54,6 +54,7 @@ class SpaceObject(InstructionGroup):
         self.pos[1] += dy
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
+        self.on_update(0)
 
     def on_resize(self, win_size):
         self.r = self.r / self.w * win_size[0]
@@ -128,7 +129,7 @@ class PhysBubble(InstructionGroup):
         return [self.pos_x, self.pos_y]
 
     def on_resize(self, win_size):
-        self.radius = win_size[0] // 30
+        self.radius = win_size[0] // 25
         self.circle.csize = (2 * self.radius, 2 * self.radius)
 
     def get_moving_dist(self):

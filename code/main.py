@@ -37,7 +37,7 @@ class MainWidget(BaseWidget):
         self.tonnetz = Tonnetz(600, callback=self.audio_ctrl.make_prl)
         self.canvas.add(self.tonnetz)
         self.starship = PhysBubble(pos=(Window.width/2, Window.height/2),
-                                   r=Window.width/30,
+                                   r=Window.width/25,
                                    color=(1, 1, 1),
                                    callback=self.tonnetz.on_boundary,
                                    in_boundary=self.tonnetz.within_boundary)
