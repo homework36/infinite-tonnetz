@@ -11,7 +11,9 @@ class Player(object):
         self.main_obj = main_obj
         self.space_objects = space_objects
         self.static_objects = static_objects
+        self.near_planet = 0
         self.on_update()
+        
 
     def on_update(self):
         main_x, main_y = self.main_obj.get_curr_pos()
@@ -23,28 +25,35 @@ class Player(object):
             type = i.type
             dist = np.sqrt((main_x - obj_x)**2 + (main_y - obj_y)**2)
             touch_dist = (main_size + obj_size)
+            astronaut_dist = touch_dist * 3
             if type == 'star':
                 if dist < touch_dist:
+                    vel = int(np.interp(dist, (0, touch_dist), (60,15)))
+                    self.audio_ctrl.adjust_volume(self.audio_ctrl.chromscale_chan,vel)
                     self.audio_ctrl.play_chromscale()
 
             elif type == 'astronaut':  # play recording
-                if dist < touch_dist * 2:
-                    if not self.audio_ctrl.playing:
-                        self.audio_ctrl.toggle()
-                        self.audio_ctrl.reading_max_gain = 0.05 * \
-                            (1.5-dist / touch_dist)
-                elif dist < touch_dist * 3:
-                    if not self.audio_ctrl.playing:
-                        self.audio_ctrl.toggle()
-                        self.audio_ctrl.reading_max_gain = 0.05 * \
-                            (dist / touch_dist / 3 * 0.05)
+                if dist < astronaut_dist:
+                    vel = np.interp(dist, (0, astronaut_dist), (0.2, 0.01))
+                    self.audio_ctrl.adjust_astronaut(vel)
+                    self.audio_ctrl.play_astronaut()
                 else:
-                    if self.audio_ctrl.playing:
-                        self.audio_ctrl.toggle()
+                    self.audio_ctrl.pause_astronaut()
+                pass
 
             elif type == 'planet':  # play seventh note
-                if dist < touch_dist:
-                    self.audio_ctrl.toggle_seventh()
+                if dist <= touch_dist:
+                    self.near_planet += 1
+                else:
+                    self.near_planet -= 1
+                    self.near_planet = max(0,self.near_planet)
+            
+        if self.near_planet > 0:
+            self.audio_ctrl.play_seventh()
+            self.audio_ctrl.play_melody()
+        else:
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.stop_melody()
 
         # move space objects relatively as main object moves
         if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:

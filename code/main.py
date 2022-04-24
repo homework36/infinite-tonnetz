@@ -96,7 +96,6 @@ class MainWidget(BaseWidget):
         self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        self.info.text += f'audio {"ON" if self.audio_ctrl.playing else "OFF"} (press p to toggle)\n'
         # self.info.text += f'{self.starship.rotate.angle}'
         self.info.text += f'{self.objects.size()}'
 
@@ -114,23 +113,44 @@ class MainWidget(BaseWidget):
         # self.curr_z = self.curr_pos['z']
 
     def on_key_down(self, keycode, modifiers):
-        if keycode[1] == 'p':
-            self.audio_ctrl.toggle()
-
         if keycode[1] == 'up':
             self.tonnetz.modify_seq_length(10.)
 
         if keycode[1] == 'down':
             self.tonnetz.modify_seq_length(-10.)
 
+
+        if keycode[1] == 'p':
+            self.audio_ctrl.play_astronaut()
+    
+        if keycode[1] == 'q':
+            self.audio_ctrl.pause_astronaut()
+
+      
         if keycode[1] == 'c':
             self.audio_ctrl.play_chromscale()
 
         if keycode[1] == 's':
-            self.audio_ctrl.toggle_seventh()
+            self.audio_ctrl.play_seventh()
+            self.audio_ctrl.play_melody()
         
-        if keycode[1] == 'l':
-            self.audio_ctrl.toggle_sidepiece()
+        if keycode[1] == 'd':
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.stop_melody()
+
+        if keycode[1] == 'm':
+            self.audio_ctrl.play_modescale()
+
+        if keycode[1] == 'n':
+            self.audio_ctrl.stop_modescale()
+
+        
+        if keycode[1] == 'j':
+            self.audio_ctrl.play_jazz()
+        
+        if keycode[1] == 'k':
+            self.audio_ctrl.stop_jazz()
+
 
 
 if __name__ == "__main__":
