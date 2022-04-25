@@ -13,7 +13,7 @@ import numpy as np
 
 inner_boundary_factor = 0.2
 outer_boudnary_factor = 0.4
-rescale_const = Window.width / 6
+rescale_const = Window.width / 4
 
 
 class SpaceObject(InstructionGroup):
@@ -48,6 +48,9 @@ class SpaceObject(InstructionGroup):
 
         self.start_anim = False
         self.end_time = 0
+
+        # language option for astronaut
+        self.rand_lan = np.random.choice([1,0],p=[.5,.5])
 
         self.on_update(0)
 
