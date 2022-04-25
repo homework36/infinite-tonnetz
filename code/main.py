@@ -47,6 +47,9 @@ class MainWidget(BaseWidget):
         self.add_space_objects()
         self.player = Player(self.starship, self.tonnetz,
                              self.audio_ctrl, self.space_objects, self.static_objects)
+        self.curr_touch = self.reader.get_pos()['touch']
+        self.last_touch = {}
+        self.touch_diff_x, self.touch_diff_y = 0, 0
 
     def add_space_objects(self):
         planet_weights = [0.1, 0.3, 0.3, 0.3]
@@ -59,7 +62,7 @@ class MainWidget(BaseWidget):
             self.space_objects.append(SpaceObject(np.random.randint(
                 30, 60), '../img/'+rand_planet+'.png', 'planet'))
 
-        for _ in range(8):  # create stars
+        for _ in range(20):  # create stars
             self.space_objects.append(SpaceObject(
                 np.random.randint(10, 20), '../img/star.png', 'star'))
 
@@ -68,14 +71,14 @@ class MainWidget(BaseWidget):
             50, '../img/astronaut.png', 'astronaut'))
 
         self.space_objects.append(SpaceObject(
-            70, '../img/special_planet2.png', 'splanet'))
+            120, '../img/special_planet2.png', 'splanet'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
 
         # create static stars
         self.static_objects = []
-        for _ in range(100):  # create round stars
+        for _ in range(60):  # create round stars
             self.static_objects.append(SpaceObject(
                 np.random.randint(4, 8), '../img/star2.png', 'star2'))
 
@@ -103,7 +106,8 @@ class MainWidget(BaseWidget):
         self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
         # self.info.text += f'{self.starship.rotate.angle}'
-        self.info.text += f'{self.objects.size()}'
+        self.info.text += f'{self.objects.size()}\n'
+        self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
 
     def on_resize(self, win_size):
         self.tonnetz.on_resize(win_size)
@@ -116,7 +120,15 @@ class MainWidget(BaseWidget):
         response = self.reader.get_pos()
         if response:
             self.curr_pos = response['gravity']
-        # self.curr_z = self.curr_pos['z']
+            if len(response['touch']) > 0:
+                self.last_touch = self.curr_touch
+                self.curr_touch = response['touch'][0]
+                if 'x' in self.last_touch and 'y' in self.last_touch:
+                    self.touch_diff_x = self.curr_touch['x'] - self.last_touch['x']
+                    self.touch_diff_y = self.curr_touch['y'] - self.last_touch['y']
+            else:
+                self.curr_touch = {}
+                self.touch_diff_x, self.touch_diff_y = 0, 0
 
     def on_key_down(self, keycode, modifiers):
 
