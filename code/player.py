@@ -13,6 +13,7 @@ class Player(object):
         self.static_objects = static_objects
         self.near_planet = 0
         self.on_update()
+        self.last_tonnetz_seg = self.tonnetz.seg
 
     def on_update(self):
         self.near_planet = 0
@@ -95,10 +96,25 @@ class Player(object):
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth_bg, 1, vel)
                     # adjust for splanet
-                    vel = int(np.interp(dist, (0, touch_dist * 2), (80, 15)))
+                    vel = int(np.interp(dist, (0, touch_dist * 2), (90, 15)))
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth, self.audio_ctrl.sidepiece_chan, vel)
                     self.audio_ctrl.play_jazz()
                     i.on_update(0, start_anim=True)
                 else:
                     self.audio_ctrl.stop_jazz()
+
+    def zoom(self,_in=True):
+        if _in:
+            val = 10
+        else:
+            val = -10
+        self.tonnetz.modify_seq_length(val)
+        cur_seq = self.tonnetz.seg
+        origin = self.main_obj.get_curr_pos()
+        scaling_factor = cur_seq/self.last_tonnetz_seg
+        for i in self.space_objects:
+            i.on_zoom(scaling_factor,origin)
+        for i in self.static_objects:
+            i.on_zoom(scaling_factor,origin)
+        self.last_tonnetz_seg = cur_seq

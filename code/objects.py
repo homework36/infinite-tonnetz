@@ -12,7 +12,7 @@ import numpy as np
 
 
 inner_boundary_factor = 0.2
-outer_boudnary_factor = 0.4
+outer_boudnary_factor = 1.
 rescale_const = Window.width / 4
 
 
@@ -211,6 +211,18 @@ class SpaceObject(InstructionGroup):
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
         self.rect.csize = (2*self.r, 2*self.r)
+
+    def on_zoom(self, factor, origin):
+    
+        self.r = self.r * factor
+        self.rect.csize = (2*self.r, 2*self.r)
+        obj_x, obj_y = origin
+        dist_x, dist_y = self.pos[0]-obj_x, self.pos[1]-obj_y
+
+        self.pos[0] = obj_x + dist_x * factor
+        self.pos[1] = obj_y + dist_y * factor
+        self.rect.cpos = self.pos
+        self.rotate.origin = self.pos
 
 
 class PhysBubble(InstructionGroup):

@@ -274,7 +274,7 @@ class Tonnetz(InstructionGroup):
     
     def modify_seq_length(self,val):
         temp_seg = self.seg + val
-        self.seg = max(100,min(self.width,temp_seg))
+        self.seg = max(300,min(self.width/1.5,temp_seg))
         self.seg_height = self.seg*sq3/2
         self.origin[0] %= self.seg * 2
         self.origin[1] %= self.seg_height * 2

@@ -133,10 +133,12 @@ class MainWidget(BaseWidget):
     def on_key_down(self, keycode, modifiers):
 
         if keycode[1] == 'up':
-            self.tonnetz.modify_seq_length(10.)
+            # self.tonnetz.modify_seq_length(10.)
+            self.player.zoom(_in=True)
 
         if keycode[1] == 'down':
-            self.tonnetz.modify_seq_length(-10.)
+            # self.tonnetz.modify_seq_length(-10.)
+            self.player.zoom(_in=False)
 
         # following commands are for debugging
         # may have conflicts with player
