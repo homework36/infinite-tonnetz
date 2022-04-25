@@ -59,7 +59,7 @@ class MainWidget(BaseWidget):
             self.space_objects.append(SpaceObject(np.random.randint(
                 30, 60), '../img/'+rand_planet+'.png', 'planet'))
 
-        for _ in range(8):  # create stars
+        for _ in range(20):  # create stars
             self.space_objects.append(SpaceObject(
                 np.random.randint(10, 20), '../img/star.png', 'star'))
 
@@ -68,14 +68,14 @@ class MainWidget(BaseWidget):
             50, '../img/astronaut.png', 'astronaut'))
 
         self.space_objects.append(SpaceObject(
-            70, '../img/special_planet2.png', 'splanet'))
+            120, '../img/special_planet2.png', 'splanet'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
 
         # create static stars
         self.static_objects = []
-        for _ in range(100):  # create round stars
+        for _ in range(60):  # create round stars
             self.static_objects.append(SpaceObject(
                 np.random.randint(4, 8), '../img/star2.png', 'star2'))
 

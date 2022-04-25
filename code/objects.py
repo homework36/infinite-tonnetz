@@ -12,6 +12,7 @@ import numpy as np
 
 
 inner_boundary_factor = 0.2
+outer_boudnary_factor = 0.4
 rescale_const = Window.width / 6
 
 
@@ -31,8 +32,8 @@ class SpaceObject(InstructionGroup):
         self.vel = np.array((np.random.uniform(-10, 10),
                             np.random.uniform(-10, 10)), dtype=float)
         # self.vel = np.array((0,0), dtype=float)
-        self.pos = [np.random.uniform(-0.2, 1.2) * Window.width,
-                    np.random.uniform(-0.2, 1.2) * Window.height]
+        self.pos = [np.random.uniform(-outer_boudnary_factor, 1+outer_boudnary_factor) * Window.width,
+                    np.random.uniform(-outer_boudnary_factor, 1+outer_boudnary_factor) * Window.height]
         self.rect = CRectangle(cpos=self.pos, csize=(2*r, 2*r), segments=40)
         self.rect.texture = Image(source=img_path).texture
 
@@ -71,10 +72,10 @@ class SpaceObject(InstructionGroup):
         self.rotate.origin = self.pos
         self.add_animation(start_anim)
 
-        if not (-inner_boundary_factor * self.w-self.r <= self.pos[0] <=
-                (1+inner_boundary_factor) * self.w+self.r and
-                -inner_boundary_factor * self.h-self.r <= self.pos[1] <=
-                (1+inner_boundary_factor) * self.h+self.r):
+        if not (-outer_boudnary_factor * self.w-self.r <= self.pos[0] <=
+                (1+outer_boudnary_factor) * self.w+self.r and
+                -outer_boudnary_factor * self.h-self.r <= self.pos[1] <=
+                (1+outer_boudnary_factor) * self.h+self.r):
             self.reset(dx, dy)
 
         return True
