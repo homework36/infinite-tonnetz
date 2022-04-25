@@ -15,9 +15,40 @@ class Player(object):
         self.on_update()
 
     def on_update(self):
+        self.near_planet = 0
+        self.sound_anim_effect()
+
+        if self.near_planet == 0:
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.stop_melody()
+
+        self.update_pos_at_bounadry()
+
+    def update_pos_at_bounadry(self):
+        # move space objects relatively as main object moves
+        if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
+            dx, dy = self.main_obj.get_moving_dist()
+            scale_x = 1.1 if dx > 0 else 0.9
+            scale_y = 1.1 if dy > 0 else 0.9
+            for i in self.space_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx*scale_x, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy*scale_y)
+
+            for i in self.static_objects:
+                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
+                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                elif self.main_obj.touch_boundary_x:
+                    i.update_pos(-dx*scale_x, 0)
+                elif self.main_obj.touch_boundary_y:
+                    i.update_pos(0, -dy*scale_y)
+
+    def sound_anim_effect(self):
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
-        self.near_planet = 0
         for i in self.space_objects:
             obj_x, obj_y = i.get_curr_pos()
             obj_size = i.r
@@ -56,28 +87,3 @@ class Player(object):
                     i.on_update(0, start_anim=True)
                 else:
                     self.audio_ctrl.stop_jazz()
-
-        if self.near_planet == 0:
-            self.audio_ctrl.pause_seventh()
-            self.audio_ctrl.stop_melody()
-
-        # move space objects relatively as main object moves
-        if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
-            dx, dy = self.main_obj.get_moving_dist()
-            scale_x = 1.1 if dx > 0 else 0.9
-            scale_y = 1.1 if dy > 0 else 0.9
-            for i in self.space_objects:
-                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
-                    i.update_pos(-dx*scale_x, -dy*scale_y)
-                elif self.main_obj.touch_boundary_x:
-                    i.update_pos(-dx*scale_x, 0)
-                elif self.main_obj.touch_boundary_y:
-                    i.update_pos(0, -dy*scale_y)
-
-            for i in self.static_objects:
-                if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
-                    i.update_pos(-dx*scale_x, -dy*scale_y)
-                elif self.main_obj.touch_boundary_x:
-                    i.update_pos(-dx*scale_x, 0)
-                elif self.main_obj.touch_boundary_y:
-                    i.update_pos(0, -dy*scale_y)

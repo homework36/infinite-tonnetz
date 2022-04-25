@@ -125,6 +125,7 @@ class SpaceObject(InstructionGroup):
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
         self.rect.csize = (2*self.r, 2*self.r)
+        print(self.type, self.rect.cpos)
 
 
 class PhysBubble(InstructionGroup):
