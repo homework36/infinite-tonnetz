@@ -800,8 +800,8 @@ class SidePiece(object):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        # next_beat = quantize_tick_up(now, kTicksPerQuarter)
-        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
+        next_beat = quantize_tick_up(now, kTicksPerQuarter)
+        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
 
 
     def stop(self):
