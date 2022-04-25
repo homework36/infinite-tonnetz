@@ -128,9 +128,9 @@ class MainWidget(BaseWidget):
                     self.touch_diff_y = self.curr_touch['y'] - self.last_touch['y']
                 
                 # zoom in/out
-                if self.curr_touch['y'] <= 0 or self.touch_diff_y < 0:
+                if self.touch_diff_y < 0:
                     self.player.zoom(_in=True)
-                elif self.curr_touch['y'] > 0 or self.touch_diff_y > 0:
+                elif self.touch_diff_y > 0:
                     self.player.zoom(_in=False)
                     
             else:
