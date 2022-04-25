@@ -58,7 +58,7 @@ class Player(object):
             astronaut_dist = touch_dist * 3
             if type == 'star':
                 if dist < touch_dist:
-                    vel = int(np.interp(dist, (0, touch_dist), (60, 15)))
+                    vel = int(np.interp(dist, (0, touch_dist), (100, 30)))
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth, self.audio_ctrl.chromscale_chan, vel)
                     self.audio_ctrl.play_chromscale()
@@ -76,13 +76,27 @@ class Player(object):
 
             elif type == 'planet':  # play seventh note
                 if dist <= touch_dist * 2:
+                    
                     self.near_planet += 1
                     self.audio_ctrl.play_seventh()
-                    self.audio_ctrl.play_melody()
                     i.on_update(0, start_anim=True)
+                    if dist <= touch_dist:
+                        vel = int(np.interp(dist, (0, touch_dist), (80, 15)))
+                        self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.synth2, self.audio_ctrl.melody_chan, vel)
+                        self.audio_ctrl.play_melody()
+
 
             elif type == 'splanet':
                 if dist <= touch_dist * 2:
+                    # adjust for chord
+                    vel = int(np.interp(dist, (0, touch_dist * 2), (0, 60)))
+                    self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.synth_bg, 1, vel)
+                    # adjust for splanet
+                    vel = int(np.interp(dist, (0, touch_dist * 2), (70, 15)))
+                    self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.synth, self.audio_ctrl.sidepiece_chan, vel)
                     self.audio_ctrl.play_jazz()
                     i.on_update(0, start_anim=True)
                 else:
