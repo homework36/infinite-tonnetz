@@ -113,6 +113,19 @@ class SpaceObject(InstructionGroup):
                 self.reset()
 
     def reset(self, dx=0, dy=0):
+        '''
+        Idea: Slice the area into 9 sections:
+            1    |     2     |    3
+        ---------|-----------|--------
+            4    |  canvas   |    5
+        ---------|-----------|--------
+            6    |     7     |    8
+
+        Example:
+        If current object needs to move horizontically to the left, 
+        it implies the main object is moving right, and new object
+        needs to be generated at region 5.
+        '''
         def get_neg_range():
             return np.linspace(-0.1, -0.05, 20)
 
