@@ -93,7 +93,7 @@ class AudioController(object):
         self.mixer.add(self.fr_reading)
         self.jpn_reading.pause()
         self.fr_reading.pause()
-        self.jpn_reading.set_gain(self.reading_max_gain)
+        self.jpn_reading.set_gain(self.reading_max_gain+0.05)
         self.fr_reading.set_gain(self.reading_max_gain)
     
     def make_notes(self):
@@ -147,11 +147,15 @@ class AudioController(object):
         if lan == 1:
             if self.fr_reading.paused:
                 self.fr_reading.play()
+            if not self.jpn_reading.paused:
+                self.jpn_reading.pause()
         else:
             if self.jpn_reading.paused:
                 self.jpn_reading.play()
+            if not self.fr_reading.paused:
+                self.fr_reading.pause()
     
-    def pause_astronaut(self, lan=1):
+    def pause_astronaut(self):
         if not self.fr_reading.paused:
                 self.fr_reading.pause()
         if not self.jpn_reading.paused:
@@ -173,12 +177,12 @@ class AudioController(object):
     
     def play_jazz(self):
         if not self.sidepiece.playing:
-            self.backround_sound = False
+            # self.backround_sound = False
             self.sidepiece.start()
 
     def stop_jazz(self):
         if self.sidepiece.playing:
-            self.backround_sound = True
+            # self.backround_sound = True
             self.sidepiece.stop()
 
     def play_chromscale(self):
@@ -216,14 +220,14 @@ class AudioController(object):
     
     def adjust_astronaut(self,vel):
         self.reading_max_gain = max(0.01,min(0.15,vel))
-        self.jpn_reading.set_gain(self.reading_max_gain)
+        self.jpn_reading.set_gain(self.reading_max_gain+0.05)
         self.fr_reading.set_gain(self.reading_max_gain)
 
 
 
 # no looping
 class chord_audio(object):
-    def __init__(self, sched, synth, channel, program, triad, loop=False, vel = 50):
+    def __init__(self, sched, synth, channel, program, triad, loop=False, vel = 45):
    
         super(chord_audio, self).__init__()
         self.sched = sched
@@ -544,7 +548,7 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 25
+        self.vel = 50
         self.lastpitch = None
         self.jump = 0.5
       
@@ -606,8 +610,6 @@ class Arpeggiator2(object):
             self.ind = np.where(self.possible_notes==picknote)[0][0]
             return picknote
 
-    # want to remove this redundant part later
-    ################################################
     def _noteoff(self,tick,pitch):
         self.synth.noteoff(self.channel,pitch)
 
@@ -652,8 +654,6 @@ class Arpeggiator2(object):
         if self.vel <= 80:
             self.vel = 80
     
-    ############################## end of redundant part
-
 class ChromScaleSeq(NoteSequencer):
     def __init__(self, sched, synth, channel, program, notes, vel = 40, loop=True, length = 48):
         super(NoteSequencer, self).__init__()
@@ -701,7 +701,7 @@ class ChromScaleSeq(NoteSequencer):
             self.length += val 
 
 class SidePiece(object):
-    def __init__(self, sched, synth, channel, program, key, vel = 50):
+    def __init__(self, sched, synth, channel, program, key, vel = 70):
    
         super(SidePiece, self).__init__()
         self.sched = sched
@@ -724,23 +724,29 @@ class SidePiece(object):
         self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
         self.secondary_ind = 0
         self.scales = [[100,0, 2, 3, 5, 7, 8, 11, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
+        self.cur_base = None
+        self.cur_mode = None
         self.make_notes()
 
-    def make_notes(self):
-        cur_base = self.secondary[self.secondary_ind]
-        cur_mode = self.secondary_chord[self.secondary_ind]
-        note_num = np.random.randint(2,9)
-        notes_top = [self.scales[cur_mode][np.random.choice(range(9))] for i in range(note_num)]
-        self.notes_top = np.zeros(note_num)
-        for i in range(note_num):
-            cur = notes_top[i]
+    def make_notes(self,change_chord=True):
+        self.cur_base = self.secondary[self.secondary_ind]
+        self.cur_mode = self.secondary_chord[self.secondary_ind]
+        if change_chord:
+            self.note_num = np.random.randint(2,9)
+            self.notes_top_frame = [self.scales[self.cur_mode][np.random.choice(range(9))] for i in range(self.note_num)]
+            self.secondary_ind += 1
+            self.secondary_ind %= 4
+            self.length_top = 480/np.random.choice(range(1,5),self.note_num)
+            self.length_bass = int(min(np.round(np.sum(self.length_top)/480)*480,480))
+        
+        self.notes_top = np.zeros(self.note_num)
+        for i in range(self.note_num):
+            cur = self.notes_top_frame[i]
             if cur < 100:
-                self.notes_top[i] = notes_top[i] + cur_base
-        self.length_top = 480/np.random.choice(range(1,5),note_num)
-        self.length_bass = int(min(np.round(np.sum(self.length_top)/480)*480,480))
-        self.secondary_ind += 1
-        self.secondary_ind %= 4
-        self.notes_bass = np.array([[0,3,7,10],[0,4,7,11]][cur_mode]) + cur_base
+                self.notes_top[i] = cur + self.cur_base
+
+        self.notes_bass = np.array([[0,3,7,10],[0,4,7,11]][self.cur_mode]) + self.cur_base
+
       
     def toggle(self):
         if self.playing:
@@ -784,11 +790,12 @@ class SidePiece(object):
             self.playing = False
         
         
-    
-
     def set_key(self, new_key):
         self.pitch, self.mode = new_key
-        self.make_notes()
+        self.pitch = self.pitch % 12 + 60
+        self.secondary = np.array([2, 7, 0, 5]) + self.pitch
+        self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
+        self.make_notes(change_chord=False)
 
     def start(self):
         if self.playing:
