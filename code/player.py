@@ -32,19 +32,19 @@ class Player(object):
             scale_y = 1.1 if dy > 0 else 0.9
             for i in self.space_objects:
                 if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
-                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                    i.on_update(0, start_anim=False, dx=-dx*scale_x, dy=-dy*scale_y)
                 elif self.main_obj.touch_boundary_x:
-                    i.update_pos(-dx*scale_x, 0)
+                    i.on_update(0, start_anim=False, dx=-dx*scale_x, dy=0)
                 elif self.main_obj.touch_boundary_y:
-                    i.update_pos(0, -dy*scale_y)
+                    i.on_update(0, start_anim=False, dx=0, dy=-dy*scale_y)
 
             for i in self.static_objects:
                 if self.main_obj.touch_boundary_x and self.main_obj.touch_boundary_y:
-                    i.update_pos(-dx*scale_x, -dy*scale_y)
+                    i.on_update(0, start_anim=False, dx=-dx*scale_x, dy=-dy*scale_y)
                 elif self.main_obj.touch_boundary_x:
-                    i.update_pos(-dx*scale_x, 0)
+                    i.on_update(0, start_anim=False, dx=-dx*scale_x, dy=0)
                 elif self.main_obj.touch_boundary_y:
-                    i.update_pos(0, -dy*scale_y)
+                    i.on_update(0, start_anim=False, dx=0, dy=-dy*scale_y)
 
     def sound_anim_effect(self):
         main_x, main_y = self.main_obj.get_curr_pos()

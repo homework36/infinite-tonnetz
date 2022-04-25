@@ -1,14 +1,14 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
-import numpy as np
-from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
-from kivy.core.window import Window
-from kivy.clock import Clock as kivyClock
-from kivy.uix.label import Label
-from kivy.graphics.instructions import InstructionGroup
-from kivy.graphics import Color, Ellipse, Rectangle, Line
-from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
 from kivy.uix.image import Image
+from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
+from kivy.graphics import Color, Ellipse, Rectangle, Line
+from kivy.graphics.instructions import InstructionGroup
+from kivy.uix.label import Label
+from kivy.clock import Clock as kivyClock
+from kivy.core.window import Window
+from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
+import numpy as np
 
 
 inner_boundary_factor = 0.2
@@ -53,13 +53,6 @@ class SpaceObject(InstructionGroup):
     def get_curr_pos(self):
         return self.pos
 
-    def update_pos(self, dx, dy):
-        self.pos[0] += dx
-        self.pos[1] += dy
-        self.rect.cpos = self.pos
-        self.rotate.origin = self.pos
-        self.on_update(0)
-
     def on_resize(self, win_size):
         self.r = self.r / self.w * win_size[0]
         self.rect.csize = (2*self.r, 2*self.r)
@@ -70,26 +63,27 @@ class SpaceObject(InstructionGroup):
         self.rotate.origin = self.pos
         self.w, self.h = win_size
 
-    def on_update(self, dt, start_anim=False):
+    def on_update(self, dt, start_anim=False, dx=0, dy=0):
         self.time += dt
-        self.pos += self.vel * dt
+        self.pos[0] += self.vel[0] * dt + dx
+        self.pos[1] += self.vel[1] * dt + dy
         self.rect.cpos = self.pos
+        self.rotate.origin = self.pos
         self.add_animation(start_anim)
 
-        if -inner_boundary_factor * self.w-self.r <= self.pos[0] <= \
-            (1+inner_boundary_factor) * self.w+self.r and \
-            -inner_boundary_factor * self.h-self.r <= self.pos[1] <= \
-                (1+inner_boundary_factor) * self.h+self.r:
-            return True
+        if not (-inner_boundary_factor * self.w-self.r <= self.pos[0] <=
+                (1+inner_boundary_factor) * self.w+self.r and
+                -inner_boundary_factor * self.h-self.r <= self.pos[1] <=
+                (1+inner_boundary_factor) * self.h+self.r):
+            self.reset(dx, dy)
 
-        self.reset()
         return True
 
     def add_animation(self, start_anim):
         if not self.start_anim and start_anim == True:
             if self.type == 'star':
                 self.size_anim = KFAnim((self.time, 2*self.r, 2*self.r),
-                                        (self.time+0.3, 2*self.r*3, 2*self.r*3),
+                                        (self.time+0.3, 2*self.r*1.5, 2*self.r*1.5),
                                         (self.time+1, 0, 0))
                 self.pos_anim = KFAnim((self.time, self.pos[0], self.pos[1]),
                                        (self.time+1, self.pos[0]+np.random.uniform(-1, 1) * self.w / 3, self.pos[1]+np.random.uniform(-1, 1)*self.h / 3))
@@ -118,14 +112,89 @@ class SpaceObject(InstructionGroup):
             if self.type == 'star':
                 self.reset()
 
-    def reset(self):
-        # TODO: out of bound: reassign a position to pretend that a new object is created
-        self.pos = [np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.width,
-                    np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.height]
+    def reset(self, dx=0, dy=0):
+        def get_neg_range():
+            return np.linspace(-0.1, -0.05, 20)
+
+        def get_norm_range():
+            return np.linspace(-0.05, 1.05, 100)
+
+        def get_pos_range():
+            return np.linspace(1.05, 1.1, 20)
+
+        def get_region_choice(num):
+            if num == 1:  # upper left
+                x_choice = get_neg_range()
+                y_choice = get_pos_range()
+            elif num == 2:  # upper middle
+                x_choice = get_norm_range()
+                y_choice = get_pos_range()
+            elif num == 3:  # upper right
+                x_choice = get_pos_range()
+                y_choice = get_pos_range()
+            elif num == 4:  # middle left
+                x_choice = get_neg_range()
+                y_choice = get_norm_range()
+            elif num == 5:  # middle right
+                x_choice = get_pos_range()
+                y_choice = get_norm_range()
+            elif num == 6:  # lower left
+                x_choice = get_neg_range()
+                y_choice = get_neg_range()
+            elif num == 7:  # lower middle
+                x_choice = get_norm_range()
+                y_choice = get_neg_range()
+            elif num == 8:  # lower right
+                x_choice = get_pos_range()
+                y_choice = get_neg_range()
+            return x_choice.tolist(), y_choice.tolist()
+
+        def get_all_choices(region_options):
+            region = np.random.choice(region_options)
+            list_x, list_y = get_region_choice(region)
+            x_weights = [1/len(list_x)] * len(list_x)
+            y_weights = [1/len(list_y)] * len(list_y)
+            return list_x, list_y, x_weights, y_weights
+
+        pos_x_choice, pos_y_choice = None, None
+        x_weights, y_weights = [], []
+        if dx > 0 and dy < 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               1, 2, 4])
+        elif dx > 0 and dy == 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               4])
+        elif dx > 0 and dy > 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               4, 6, 7])
+
+        elif dx < 0 and dy < 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               2, 3, 5])
+        elif dx < 0 and dy == 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               5])
+        elif dx < 0 and dy > 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               5, 7, 8])
+
+        elif dx == 0 and dy < 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               2])
+        elif dx == 0 and dy == 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices(
+                [1, 2, 3, 4, 5, 6, 7, 8])
+        elif dx == 0 and dy > 0:
+            pos_x_choice, pos_y_choice, x_weights, y_weights = get_all_choices([
+                                                                               7])
+
+        final_x = np.random.choice(pos_x_choice, p=x_weights)
+        final_y = np.random.choice(pos_y_choice, p=y_weights)
+        self.pos = [final_x * Window.width, final_y * Window.height]
+
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
         self.rect.csize = (2*self.r, 2*self.r)
-        print(self.type, self.rect.cpos)
 
 
 class PhysBubble(InstructionGroup):
