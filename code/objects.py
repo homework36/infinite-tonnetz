@@ -1,5 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
+import numpy as np
 from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
 from kivy.core.window import Window
 from kivy.clock import Clock as kivyClock
@@ -8,7 +9,6 @@ from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
 from kivy.uix.image import Image
-import numpy as np
 
 
 inner_boundary_factor = 0.2
@@ -22,12 +22,12 @@ class SpaceObject(InstructionGroup):
         self.color = Color(rgb=(1, 1, 1))
         self.add(self.color)
 
-        # make star2 as background, random alpha value
         self.type = type
+        self.r = r
+        # make star2 as background, random alpha value
         if self.type == 'star2':
             self.color.a = np.random.random()
 
-        self.r = r
         self.vel = np.array((np.random.uniform(-10, 10),
                             np.random.uniform(-10, 10)), dtype=float)
         # self.vel = np.array((0,0), dtype=float)
@@ -39,11 +39,15 @@ class SpaceObject(InstructionGroup):
         # add random rotate angle
         self.add(PushMatrix())
         self.rotate = Rotate(angle=np.random.randint(
-            low=-45, high=45), origin=self.pos)
+            low=-30, high=30), origin=self.pos)
         self.add(self.rotate)
         self.add(self.rect)
         self.add(PopMatrix())
         self.time = 0
+
+        self.start_anim = False
+        self.end_time = 0
+
         self.on_update(0)
 
     def get_curr_pos(self):
@@ -66,10 +70,11 @@ class SpaceObject(InstructionGroup):
         self.rotate.origin = self.pos
         self.w, self.h = win_size
 
-    def on_update(self, dt):
+    def on_update(self, dt, start_anim=False):
         self.time += dt
         self.pos += self.vel * dt
         self.rect.cpos = self.pos
+        self.add_animation(start_anim)
 
         if -inner_boundary_factor * self.w-self.r <= self.pos[0] <= \
             (1+inner_boundary_factor) * self.w+self.r and \
@@ -77,19 +82,56 @@ class SpaceObject(InstructionGroup):
                 (1+inner_boundary_factor) * self.h+self.r:
             return True
 
+        self.reset()
+        return True
+
+    def add_animation(self, start_anim):
+        if not self.start_anim and start_anim == True:
+            if self.type == 'star':
+                self.size_anim = KFAnim((self.time, 2*self.r, 2*self.r),
+                                        (self.time+0.3, 2*self.r*3, 2*self.r*3),
+                                        (self.time+1, 0, 0))
+                self.pos_anim = KFAnim((self.time, self.pos[0], self.pos[1]),
+                                       (self.time+1, self.pos[0]+np.random.uniform(-1, 1) * self.w / 3, self.pos[1]+np.random.uniform(-1, 1)*self.h / 3))
+
+            elif self.type in ['splanet', 'planet', 'astronaut']:
+                self.size_anim = KFAnim((self.time, 2*self.r, 2*self.r),
+                                        (self.time+0.5, 2*self.r*1.2, 2*self.r*1.2),
+                                        (self.time+1, 2*self.r*1.1, 2*self.r*1.1))
+
+            self.end_time = self.time+1
+            self.start_anim = True
+
+        if self.time < self.end_time:
+            new_size = self.size_anim.eval(self.time)
+            self.rect.csize = new_size
+
+            if self.type == 'star':
+                new_pos = self.pos_anim.eval(self.time)
+                self.rect.cpos = new_pos
+                self.pos = new_pos
+
+        elif self.time >= self.end_time > 0:
+            self.end_time = 0
+            self.start_anim = False
+
+            if self.type == 'star':
+                self.reset()
+
+    def reset(self):
         # TODO: out of bound: reassign a position to pretend that a new object is created
         self.pos = [np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.width,
                     np.random.choice(np.concatenate((np.linspace(-0.1, -0.05, 20), np.linspace(1.05, 1.1, 20)), axis=None)) * Window.height]
         self.rect.cpos = self.pos
         self.rotate.origin = self.pos
-
-        return True
+        self.rect.csize = (2*self.r, 2*self.r)
 
 
 class PhysBubble(InstructionGroup):
     def __init__(self, pos, r, color=(1, 1, 1), callback=None, in_boundary=None):
         super(PhysBubble, self).__init__()
 
+        self.width, self.height = Window.width, Window.height
         self.radius = r
         self.pos_x, self.pos_y = pos
         self.last_pos = pos
@@ -116,8 +158,6 @@ class PhysBubble(InstructionGroup):
         self.touch_boundary_x = False
         self.touch_boundary_y = False
 
-        # self.width, self.height = Window.width, Window.height
-
     def set_accel(self, ax, ay):
         self.ax = ax
         self.ay = ay
@@ -129,8 +169,9 @@ class PhysBubble(InstructionGroup):
         return [self.pos_x, self.pos_y]
 
     def on_resize(self, win_size):
-        self.radius = win_size[0] // 25
+        self.radius = self.radius / self.width * win_size[0]
         self.circle.csize = (2 * self.radius, 2 * self.radius)
+        self.width, self.height = win_size
 
     def get_moving_dist(self):
         return self.dx, self.dy
@@ -145,11 +186,10 @@ class PhysBubble(InstructionGroup):
         self.dy = self.vel_y * dt
 
         # integrate vel to get pos
-        width, height = Window.width, Window.height
-        left_width = width * inner_boundary_factor
-        right_width = width * (1-inner_boundary_factor)
-        bottom_height = height * inner_boundary_factor
-        top_height = height * (1-inner_boundary_factor)
+        left_width = self.width * inner_boundary_factor
+        right_width = self.width * (1-inner_boundary_factor)
+        bottom_height = self.height * inner_boundary_factor
+        top_height = self.height * (1-inner_boundary_factor)
         # x within boundary
         if self.radius + left_width <= self.pos_x + self.dx <= right_width - self.radius:
             self.pos_x += self.dx

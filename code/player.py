@@ -13,7 +13,6 @@ class Player(object):
         self.static_objects = static_objects
         self.near_planet = 0
         self.on_update()
-        
 
     def on_update(self):
         main_x, main_y = self.main_obj.get_curr_pos()
@@ -28,15 +27,18 @@ class Player(object):
             astronaut_dist = touch_dist * 3
             if type == 'star':
                 if dist < touch_dist:
-                    vel = int(np.interp(dist, (0, touch_dist), (60,15)))
-                    self.audio_ctrl.adjust_volume(self.audio_ctrl.synth,self.audio_ctrl.chromscale_chan,vel)
+                    vel = int(np.interp(dist, (0, touch_dist), (60, 15)))
+                    self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.synth, self.audio_ctrl.chromscale_chan, vel)
                     self.audio_ctrl.play_chromscale()
+                    i.on_update(0, start_anim=True)
 
             elif type == 'astronaut':  # play recording
                 if dist < astronaut_dist:
                     vel = np.interp(dist, (0, astronaut_dist), (0.2, 0.01))
                     self.audio_ctrl.adjust_astronaut(vel)
                     self.audio_ctrl.play_astronaut()
+                    i.on_update(0, start_anim=True)
                 else:
                     self.audio_ctrl.pause_astronaut()
                 pass
@@ -46,17 +48,18 @@ class Player(object):
                     self.near_planet += 1
                     self.audio_ctrl.play_seventh()
                     self.audio_ctrl.play_melody()
+                    i.on_update(0, start_anim=True)
 
             elif type == 'splanet':
                 if dist <= touch_dist * 2:
                     self.audio_ctrl.play_jazz()
+                    i.on_update(0, start_anim=True)
                 else:
                     self.audio_ctrl.stop_jazz()
-    
+
         if self.near_planet == 0:
             self.audio_ctrl.pause_seventh()
             self.audio_ctrl.stop_melody()
-    
 
         # move space objects relatively as main object moves
         if self.main_obj.touch_boundary_x or self.main_obj.touch_boundary_y:
