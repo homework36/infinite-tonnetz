@@ -71,7 +71,7 @@ class MainWidget(BaseWidget):
             50, '../img/astronaut.png', 'astronaut'))
 
         self.space_objects.append(SpaceObject(
-            120, '../img/special_planet2.png', 'splanet'))
+            80, '../img/special_planet2.png', 'splanet'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
