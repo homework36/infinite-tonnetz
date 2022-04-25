@@ -120,7 +120,6 @@ class SpaceObject(InstructionGroup):
             4    |  canvas   |    5
         ---------|-----------|--------
             6    |     7     |    8
-
         Example:
         If current object needs to move horizontically to the left, 
         it implies the main object is moving right, and new object
