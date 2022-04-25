@@ -127,13 +127,13 @@ class SpaceObject(InstructionGroup):
         needs to be generated at region 5.
         '''
         def get_neg_range():
-            return np.linspace(-0.1, -0.05, 20)
+            return np.linspace(-outer_boudnary_factor, -0.05, 20)
 
         def get_norm_range():
             return np.linspace(-0.05, 1.05, 100)
 
         def get_pos_range():
-            return np.linspace(1.05, 1.1, 20)
+            return np.linspace(1.05, 1+outer_boudnary_factor, 20)
 
         def get_region_choice(num):
             if num == 1:  # upper left
