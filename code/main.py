@@ -48,7 +48,9 @@ class MainWidget(BaseWidget):
         self.player = Player(self.starship, self.tonnetz,
                              self.audio_ctrl, self.space_objects, self.static_objects)
         self.curr_touch = self.reader.get_pos()['touch']
-        
+        self.last_touch = {}
+        self.touch_diff_x, self.touch_diff_y = 0, 0
+
     def add_space_objects(self):
         planet_weights = [0.1, 0.3, 0.3, 0.3]
         planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
@@ -105,7 +107,7 @@ class MainWidget(BaseWidget):
         self.info.text += f'position: {self.starship.get_curr_pos()}\n'
         # self.info.text += f'{self.starship.rotate.angle}'
         self.info.text += f'{self.objects.size()}\n'
-        self.info.text += f'{self.curr_touch}'
+        self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
 
     def on_resize(self, win_size):
         self.tonnetz.on_resize(win_size)
@@ -118,7 +120,15 @@ class MainWidget(BaseWidget):
         response = self.reader.get_pos()
         if response:
             self.curr_pos = response['gravity']
-            self.curr_touch = response['touch']
+            if len(response['touch']) > 0:
+                self.last_touch = self.curr_touch
+                self.curr_touch = response['touch'][0]
+                if 'x' in self.last_touch and 'y' in self.last_touch:
+                    self.touch_diff_x = self.curr_touch['x'] - self.last_touch['x']
+                    self.touch_diff_y = self.curr_touch['y'] - self.last_touch['y']
+            else:
+                self.curr_touch = {}
+                self.touch_diff_x, self.touch_diff_y = 0, 0
 
     def on_key_down(self, keycode, modifiers):
 
