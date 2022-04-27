@@ -167,11 +167,11 @@ class MainWidget(BaseWidget):
             self.audio_ctrl.pause_seventh()
             self.audio_ctrl.stop_melody()
 
-        # if keycode[1] == 'm':
-        #     self.audio_ctrl.play_modescale()
+        if keycode[1] == 'm':
+            self.audio_ctrl.play_modescale()
 
-        # if keycode[1] == 'n':
-        #     self.audio_ctrl.stop_modescale()
+        if keycode[1] == 'n':
+            self.audio_ctrl.stop_modescale()
 
         if keycode[1] == 'j':
             self.audio_ctrl.play_jazz()
@@ -184,6 +184,12 @@ class MainWidget(BaseWidget):
 
         if keycode[1] == 'b':
             self.audio_ctrl.stop_bg_drum()
+
+        if keycode[1] == '[':
+            self.audio_ctrl.play_highline()
+
+        if keycode[1] == ']':
+            self.audio_ctrl.stop_highline()
 
 
 if __name__ == "__main__":
