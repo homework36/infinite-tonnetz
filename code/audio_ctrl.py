@@ -624,6 +624,7 @@ class SidePiece(object):
         self.cur_base = None
         self.cur_mode = None
         self.length = 120
+        self.loop_max = 1
         self.make_notes()
 
     def make_notes(self,change_chord=True):
@@ -677,10 +678,10 @@ class SidePiece(object):
         if self.idx_top >= len(self.notes_top):
             self.idx_top = 0
             self.loop += 1
-            self.make_notes()
-            # if self.loop >= 1:
-            #     self.make_notes()
-            #     self.loop = 0
+            # self.make_notes()
+            if self.loop >= self.loop_max:
+                self.make_notes()
+                self.loop = 0
         
         if self.idx_top < len(self.notes_top):
             pitch = int(self.notes_top[self.idx_top])
@@ -806,11 +807,12 @@ class Jammer(SidePiece):
         # self.synth.cc(self.channel,91,40)
         
         self.idx_top = 0
-        self.ornament = [[7,0,7],[0,7,0],[5,7],[7,5],[7],[0]]
+        self.ornament = [[7,0,7],[0,7,0],[5,7],[7,5],[7],[0],[0,5]]
         self.cur_base = None
         self.cur_mode = None
         self.length = 240
         self.notes_bass = []
+        self.loop_max = 4
         self.make_notes()
 
     def make_notes(self,change_chord=True):
