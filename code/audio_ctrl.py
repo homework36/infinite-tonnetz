@@ -100,13 +100,20 @@ class AudioController(object):
         self.sidepiece_synth = self.synth2
         self.sidepiece = SidePiece(self.sched, self.sidepiece_synth, self.sidepiece_chan, (128,33), (self.pitch,self.mode))
         self.drum_chan = 10
-        self.drum_synth = self.synth2
-        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,117), vel = 25) 
-        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-1, (0,118),rhythm=3)
+        self.drum_synth = self.synth3
+        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,118), rhythm=0, vel = 30) 
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,114),rhythm=1, vel = 30)
+        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,115), rhythm=2, vel = 30)
+        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 30) 
+        self.drums = []
+        self.drums.append(self.drum1)
+        self.drums.append(self.drum2)
+        self.drums.append(self.drum3)
+        self.drums.append(self.drum4)
         
         self.highline_chan = 6
         self.highline_synth = self.synth3
-        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,98), (self.pitch,self.mode),vel=45)
+        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,108), (self.pitch,self.mode),vel=40)
         
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
@@ -155,20 +162,21 @@ class AudioController(object):
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
         self.chromscale.set_pitches(self.chromnotes)
-        self.drum1.set_pitches(self.triad)
-        self.drum2.set_pitches(self.triad)
-        
-    def play_bg_drum(self):
-        if not self.drum1.playing:
-            self.drum1.start()
-        if not self.drum2.playing:
-            self.drum2.start()
+        for drum in self.drums:
+            drum.set_pitches(self.triad)
 
-    def stop_bg_drum(self):
-        if self.drum1.playing:
-            self.drum1.stop()
-        if self.drum2.playing:
-            self.drum2.stop()
+        
+    def play_bg_drum(self,idx=[]):
+        for i in idx:
+            drum = self.drums[i]
+            if not drum.playing:
+                drum.start()
+
+    def stop_bg_drum(self,idx=[]):
+        for i in idx:
+            drum = self.drums[i]
+            if drum.playing:
+                drum.stop()
     
     def play_highline(self):
         if not self.highline.playing:
@@ -699,7 +707,9 @@ class SidePiece(object):
                     self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, cur_note))  
             # schedule the next note:
             self.idx_top += 1
-            self.on_cmd = self.sched.post_at_tick(self._note_on, tick + self.length)
+            noteplay_original = self.length + tick
+            noteplay = quantize_tick_up(noteplay_original, self.length) - self.length
+            self.on_cmd = self.sched.post_at_tick(self._note_on, noteplay)
         else:
             self.playing = False
 
@@ -747,10 +757,11 @@ class SidePiece(object):
 
 
 RhythmBank = [
-[0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1],
-[0,0,0,0, 1,0,0,1, 0,1,0,0, 0,0,0,0],
+[1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+[1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
 [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
-[1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0]]
+[0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1]
+]
 
 class Drum(NoteSequencer):
     def __init__(self, sched, synth, notes, channel, program, vel=30, rhythm=0, note=0):
@@ -790,7 +801,7 @@ class Drum(NoteSequencer):
     def change_rhythm(self,rhythm):
         self.rhythm = np.array(RhythmBank[rhythm])
 
-Ornament1 = [[7,0,7],[0,7,0],[5,7],[7,5],[7,7],[0,0],[0,5]]
+Ornament1 = [[7,0,7],[0,7,0],[5,7],[7,5],[7,7],[0,0]]
 class Jammer(SidePiece):
     def __init__(self, sched, synth, channel, program, key, ornament=Ornament1, vel = 50):
         self.sched = sched
@@ -811,7 +822,7 @@ class Jammer(SidePiece):
         self.ornament = ornament
         self.cur_base = None
         self.cur_mode = None
-        self.length = 240
+        self.length = 960
         self.notes_bass = []
         self.loop_max = 4
         self.make_notes()
@@ -846,3 +857,6 @@ class Jammer(SidePiece):
         self.pitch, self.mode = new_key
         self.pitch = self.pitch % 12 + 60
         self.make_notes(change_chord=False)
+
+    def set_length(self, length):
+        self.length = length

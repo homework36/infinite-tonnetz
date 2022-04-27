@@ -20,12 +20,11 @@ class Player(object):
         
 
     def on_update(self):
-        
+        self.main_object_sound()
         self.sound_anim_effect()
 
         if self.near_planet == 0:
             self.audio_ctrl.pause_seventh()
-            self.audio_ctrl.stop_melody()
         
         self.update_pos_at_bounadry()
 
@@ -51,19 +50,43 @@ class Player(object):
                 elif self.main_obj.touch_boundary_y:
                     i.on_update(0, start_anim=False, dx=0, dy=-dy*scale_y)
 
+    def main_object_sound(self):
+        dx = np.abs(self.main_obj.dx)
+        dy = np.abs(self.main_obj.dy)
+        
+        if dx >= 2 or dy >= 2:
+            self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
+            self.audio_ctrl.play_modescale()
+            self.audio_ctrl.highline.set_length(60)
+            return
+        elif dx >= 1.5 or dy >= 1.5:
+            self.audio_ctrl.play_bg_drum(idx=[0,1,2])
+            self.audio_ctrl.stop_bg_drum(idx=[3])
+            self.audio_ctrl.play_modescale()
+            self.audio_ctrl.highline.set_length(120)
+            return
+        elif dx >= 1 or dy >= 1:
+            self.audio_ctrl.play_bg_drum(idx=[0,1])
+            self.audio_ctrl.stop_bg_drum(idx=[2,3])
+            self.audio_ctrl.play_modescale()
+            self.audio_ctrl.highline.set_length(240)
+            return
+        elif dx >= 0.2 or dy >= 0.2:
+            self.audio_ctrl.play_bg_drum(idx=[0])
+            self.audio_ctrl.stop_bg_drum(idx=[1,2,3])
+            self.audio_ctrl.play_modescale()
+            self.audio_ctrl.highline.set_length(480)
+            return
+        else:
+            self.audio_ctrl.stop_bg_drum(idx=[0,1,2,3])
+            self.audio_ctrl.stop_modescale()
+            self.audio_ctrl.highline.set_length(960)
+            return
+
     def sound_anim_effect(self):
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
         self.near_planet = 0
-        dx = np.abs(self.main_obj.dx)
-        dy = np.abs(self.main_obj.dy) 
-        
-        if dx >= 0.2 or dy >= 0.2:
-            self.audio_ctrl.play_bg_drum()
-            self.audio_ctrl.play_modescale()
-        else:
-            self.audio_ctrl.stop_bg_drum()
-            self.audio_ctrl.stop_modescale()
 
         for i in self.space_objects:
             obj_x, obj_y = i.get_curr_pos()
@@ -93,28 +116,26 @@ class Player(object):
                 
 
             elif type == 'planet':  # play seventh note
-                if dist <= touch_dist * 2:
-                    
+                if dist <= touch_dist * 3:
                     self.near_planet += 1
                     self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)
-
-                    if dist <= touch_dist*1.2:
-                        vel = int(np.interp(dist, (0, touch_dist*1.2), (90, 15)))
-                        self.audio_ctrl.adjust_volume(
-                        self.audio_ctrl.melody_synth, self.audio_ctrl.melody_chan, vel)
-                        self.audio_ctrl.play_melody()
+            
+            elif type == 'splanet2':
+                if dist <= touch_dist*2:
+                    vel = int(np.interp(dist, (0, touch_dist*2), (90, 15)))
+                    self.audio_ctrl.adjust_volume(
+                    self.audio_ctrl.melody_synth, self.audio_ctrl.melody_chan, vel)
+                    self.audio_ctrl.play_melody()
+                    i.on_update(0, start_anim=True)
+                else:
+                    self.audio_ctrl.stop_melody()
 
 
 
             elif type == 'splanet':
-                if dist <= touch_dist * 2:
-                    # adjust for chord
-                    # vel = int(np.interp(dist, (0, touch_dist ), (20, 60)))
-                    # self.audio_ctrl.adjust_volume(
-                    #     self.audio_ctrl.synth_bg, 1, vel)
-                    # adjust for splanet
-                    vel = int(np.interp(dist, (0, touch_dist * 2), (70, 15)))
+                if dist <= touch_dist * 3:
+                    vel = int(np.interp(dist, (0, touch_dist * 3), (70, 15)))
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.sidepiece_synth, self.audio_ctrl.sidepiece_chan, vel)
                     self.audio_ctrl.play_jazz()

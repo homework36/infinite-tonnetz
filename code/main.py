@@ -52,15 +52,15 @@ class MainWidget(BaseWidget):
         self.touch_diff_x, self.touch_diff_y = 0, 0
 
     def add_space_objects(self):
-        planet_weights = [0.1, 0.3, 0.3, 0.3]
-        planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
+        # planet_weights = [0.1, 0.3, 0.3, 0.3]
+        # planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
 
         self.space_objects = []
 
         for _ in range(5):  # create planets
-            rand_planet = np.random.choice(planet_choices, p=planet_weights)
+            # rand_planet = np.random.choice(planet_choices, p=planet_weights)
             self.space_objects.append(SpaceObject(np.random.randint(
-                30, 60), '../img/'+rand_planet+'.png', 'planet'))
+                30, 60), '../img/planet'+str(np.random.choice(range(1,5)))+'.png', 'planet'))
 
         for _ in range(20):  # create stars
             self.space_objects.append(SpaceObject(
@@ -72,6 +72,9 @@ class MainWidget(BaseWidget):
 
         self.space_objects.append(SpaceObject(
             80, '../img/special_planet2.png', 'splanet'))
+
+        self.space_objects.append(SpaceObject(
+            80, '../img/special_planet.png', 'splanet2'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group

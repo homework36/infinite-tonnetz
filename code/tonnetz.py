@@ -46,7 +46,9 @@ class StarLine(InstructionGroup):
         self.width, self.height = Window.width, Window.height
         self.range = range
         self.last_cross_pt = None
-
+        self.color = Color(1, 1, 1)
+        self.add(self.color)
+        self.color_change_elapse = 0
         self.add(self.line)
     
     def update_line(self, dx, dy):
@@ -87,6 +89,7 @@ class StarLine(InstructionGroup):
     def check_cross(self, cur_pos, last_pos, moving=False):
         '''pos: current position of main object
            last_pos: last position of main object'''
+        self.color_change_elapse += 1
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
         # if self.last_cross_pt is not None:
@@ -98,35 +101,48 @@ class StarLine(InstructionGroup):
             # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
             # print(self.type,'trans with line',self.cx,self.cy)
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                if self.last_cross_pt is not None:
-                    if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
-                        return False
+                if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                    self.change_color(default=False)
+                    return False
                 self.last_cross_pt = temp
+                self.change_color()
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
                 # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
                 # print(self.type,'trans with line',self.cx,self.cy)
                 if self.last_cross_pt is not None:
                     if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                        self.change_color(default=False)
                         return False
                 self.last_cross_pt = temp
+                self.change_color()
                 return True
             else:
                 self.last_cross_pt = None
+                self.change_color(default=False)
                 return False
 
         if self.intersect(cur_pos, last_pos, self.end1, self.end2):
-            # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
-            # print(self.type,'trans with line',self.cx,self.cy)
-            if self.last_cross_pt is not None:
-                if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
-                    return False
+            print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
+            print(self.type,'trans with line',self.cx,self.cy)
+            if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                self.change_color(default=False)
+                return False
             self.last_cross_pt = temp
+            self.change_color()
             return True
         else:
             self.last_cross_pt = None
+            self.change_color(default=False)
             return False
-        
+    
+    def change_color(self, default=True):
+        if default:
+            self.color.rgb = (.7,.6,.2)
+        else:
+            if self.color_change_elapse >= 30:
+                self.color_change_elapse = 0
+                self.color.rgb = (1.,1.,1.)
 
         
 
@@ -259,10 +275,14 @@ class Tonnetz(InstructionGroup):
             line.update_line(diff_origin[0],diff_origin[1])
 
     def on_update(self):
+        # print()
+        # print('totle lines',len(self.line_list))
+        # for line in self.line_list:
+            # print('line',line.type,line.cx,line.cy)
         if self.in_boundary:
             self.check_lines()
         else:
-            pass
+            return
 
     def check_lines(self,dx=0,dy=0):
         if self.obj is not None and self.callback is not None:

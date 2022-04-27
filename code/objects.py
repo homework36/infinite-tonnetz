@@ -92,7 +92,7 @@ class SpaceObject(InstructionGroup):
                 self.pos_anim = KFAnim((self.time, self.pos[0], self.pos[1]),
                                        (self.time+1, self.pos[0]+np.random.uniform(-1, 1) * self.w / 3, self.pos[1]+np.random.uniform(-1, 1)*self.h / 3))
 
-            elif self.type in ['splanet', 'planet', 'astronaut']:
+            elif self.type in ['splanet', 'planet', 'astronaut', 'splanet2']:
                 self.size_anim = KFAnim((self.time, 2*self.r, 2*self.r),
                                         (self.time+0.5, 2*self.r*1.2, 2*self.r*1.2),
                                         (self.time+1, 2*self.r*1.1, 2*self.r*1.1))
