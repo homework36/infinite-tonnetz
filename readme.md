@@ -10,6 +10,8 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
 
 1. Softwares: [Miniconda](https://docs.conda.io/en/latest/miniconda.html), [Kivy](https://kivy.org/), [NumPy](https://numpy.org/), [pyAudio](http://people.csail.mit.edu/hubert/pyaudio/), and [FluidSynth](https://www.fluidsynth.org/)
 
+   
+
 2. *Windows only*: install the [ASIO drivers](https://www.asio4all.org/)
 
 3. Get the app, one option is to use the following command
@@ -18,6 +20,14 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
    git clone https://github.mit.edu/21m385/infinite-tonnetz
    cd code
    ```
+
+4. Go to the app folder, install the required packages by running this command
+
+   ```
+   conda install --file requirements.txt
+   ```
+
+   
 
 ##### Step 2: Connect with your smartphone (full description [here](https://heliotrope-script-d84.notion.site/Send-OSC-from-phone-to-PC-55ec4f7e780e49d68cd78e8dade89ea5))
 
