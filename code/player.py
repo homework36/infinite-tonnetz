@@ -15,6 +15,7 @@ class Player(object):
         # self.near_planet_min_dist = 10000
         self.last_tonnetz_seg = self.tonnetz.seg
         self.on_update()
+        self.audio_ctrl.play_highline()
         
         
 
@@ -54,7 +55,16 @@ class Player(object):
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
         self.near_planet = 0
-        # self.near_planet_min_dist = 10000
+        dx = np.abs(self.main_obj.dx)
+        dy = np.abs(self.main_obj.dy) 
+        
+        if dx >= 0.2 or dy >= 0.2:
+            self.audio_ctrl.play_bg_drum()
+            self.audio_ctrl.play_modescale()
+        else:
+            self.audio_ctrl.stop_bg_drum()
+            self.audio_ctrl.stop_modescale()
+
         for i in self.space_objects:
             obj_x, obj_y = i.get_curr_pos()
             obj_size = i.r
@@ -100,9 +110,9 @@ class Player(object):
             elif type == 'splanet':
                 if dist <= touch_dist * 2:
                     # adjust for chord
-                    vel = int(np.interp(dist, (0, touch_dist ), (20, 60)))
-                    self.audio_ctrl.adjust_volume(
-                        self.audio_ctrl.synth_bg, 1, vel)
+                    # vel = int(np.interp(dist, (0, touch_dist ), (20, 60)))
+                    # self.audio_ctrl.adjust_volume(
+                    #     self.audio_ctrl.synth_bg, 1, vel)
                     # adjust for splanet
                     vel = int(np.interp(dist, (0, touch_dist * 2), (70, 15)))
                     self.audio_ctrl.adjust_volume(
@@ -113,13 +123,7 @@ class Player(object):
                 else:
                     self.audio_ctrl.stop_jazz()
 
-                if dist <= self.last_tonnetz_seg:
-                    vel = int(np.interp(dist, (0, self.last_tonnetz_seg), (40, 10)))
-                    self.audio_ctrl.adjust_volume(
-                        self.audio_ctrl.drum_synth, self.audio_ctrl.drum_chan, vel)
-                    self.audio_ctrl.play_bg_drum()
-                else:
-                    self.audio_ctrl.stop_bg_drum()
+
 
     def zoom(self,_in=True):
         if _in:

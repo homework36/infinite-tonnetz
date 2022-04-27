@@ -10,8 +10,6 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
 
 1. Softwares: [Miniconda](https://docs.conda.io/en/latest/miniconda.html), [Kivy](https://kivy.org/), [NumPy](https://numpy.org/), [pyAudio](http://people.csail.mit.edu/hubert/pyaudio/), and [FluidSynth](https://www.fluidsynth.org/)
 
-   
-
 2. *Windows only*: install the [ASIO drivers](https://www.asio4all.org/)
 
 3. Get the app, one option is to use the following command
