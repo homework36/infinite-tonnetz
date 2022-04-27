@@ -100,14 +100,15 @@ class MainWidget(BaseWidget):
         self.starship_anim_group.on_update()
         self.player.on_update()
 
-        self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
+        self.info.text = ''
+        # self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
-        self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
-        self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
-        self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        # self.info.text += f'{self.starship.rotate.angle}'
-        self.info.text += f'{self.objects.size()}\n'
-        self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
+        # self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
+        # self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
+        # self.info.text += f'position: {self.starship.get_curr_pos()}\n'
+        # # self.info.text += f'{self.starship.rotate.angle}'
+        # self.info.text += f'{self.objects.size()}\n'
+        # self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
 
     def on_resize(self, win_size):
         self.tonnetz.on_resize(win_size)
@@ -166,11 +167,11 @@ class MainWidget(BaseWidget):
             self.audio_ctrl.pause_seventh()
             self.audio_ctrl.stop_melody()
 
-        if keycode[1] == 'm':
-            self.audio_ctrl.play_modescale()
+        # if keycode[1] == 'm':
+        #     self.audio_ctrl.play_modescale()
 
-        if keycode[1] == 'n':
-            self.audio_ctrl.stop_modescale()
+        # if keycode[1] == 'n':
+        #     self.audio_ctrl.stop_modescale()
 
         if keycode[1] == 'j':
             self.audio_ctrl.play_jazz()
