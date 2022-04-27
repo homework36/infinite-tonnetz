@@ -328,8 +328,8 @@ class chord_audio(object):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        next_beat = quantize_tick_up(now, int(kTicksPerQuarter/2))
-        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
+        # next_beat = quantize_tick_up(now, int(kTicksPerQuarter/2))
+        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
 
 
     def stop(self):
