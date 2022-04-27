@@ -16,6 +16,7 @@ class Player(object):
         self.last_tonnetz_seg = self.tonnetz.seg
         self.on_update()
         self.audio_ctrl.play_highline()
+        self.audio_ctrl.play_seventh()
         
         
 
@@ -23,8 +24,8 @@ class Player(object):
         self.main_object_sound()
         self.sound_anim_effect()
 
-        if self.near_planet == 0:
-            self.audio_ctrl.pause_seventh()
+        # if self.near_planet == 0:
+            # self.audio_ctrl.pause_seventh()
         
         self.update_pos_at_bounadry()
 
@@ -57,13 +58,13 @@ class Player(object):
         if dx >= 2 or dy >= 2:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.play_modescale()
-            self.audio_ctrl.highline.set_length(60)
+            self.audio_ctrl.highline.set_length(120)
             return
         elif dx >= 1.5 or dy >= 1.5:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2])
             self.audio_ctrl.stop_bg_drum(idx=[3])
             self.audio_ctrl.play_modescale()
-            self.audio_ctrl.highline.set_length(120)
+            self.audio_ctrl.highline.set_length(160)
             return
         elif dx >= 1 or dy >= 1:
             self.audio_ctrl.play_bg_drum(idx=[0,1])
@@ -118,7 +119,7 @@ class Player(object):
             elif type == 'planet':  # play seventh note
                 if dist <= touch_dist * 3:
                     self.near_planet += 1
-                    self.audio_ctrl.play_seventh()
+                    # self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)
             
             elif type == 'splanet2':

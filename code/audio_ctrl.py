@@ -51,7 +51,7 @@ class AudioController(object):
         self.synth3 = SynthEffect(effect=board.process)
 
         # create TempoMap, AudioScheduler
-        self.tempo_map  = SimpleTempoMap(80)
+        self.tempo_map  = SimpleTempoMap(72)
         self.sched = AudioScheduler(self.tempo_map)
 
         # connect scheduler into audio system
@@ -72,7 +72,7 @@ class AudioController(object):
         self.seventh = np.array([[10,11][self.mode]]) + self.pitch
         # print('seventh',self.seventh)
         self.if_seventh = False
-        self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,99), self.triad, loop=False)
+        self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
         self.chord_svth_chan = 0
         self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (8,28), self.seventh, loop=False)
         self.backround_sound = True # play background chord at the beginning
@@ -92,7 +92,7 @@ class AudioController(object):
         self.arpeg.jump = 0.5
         self.melody_chan = 3
         self.melody_synth = self.synth_bg
-        self.melody = Arpeggiator2(self.sched, self.melody_synth, self.melodynotes + 24, 480, self.melody_chan, program = (8,40) )   
+        self.melody = Arpeggiator2(self.sched, self.melody_synth, self.melodynotes + 24, 480, self.melody_chan, program = (8,28) )   
         self.chromscale_chan = 4
         self.chromscale_synth = self.synth2
         self.chromscale = ChromScaleSeq(self.sched, self.chromscale_synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
@@ -101,10 +101,10 @@ class AudioController(object):
         self.sidepiece = SidePiece(self.sched, self.sidepiece_synth, self.sidepiece_chan, (128,33), (self.pitch,self.mode))
         self.drum_chan = 10
         self.drum_synth = self.synth3
-        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,118), rhythm=0, vel = 30) 
-        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,114),rhythm=1, vel = 30)
-        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,115), rhythm=2, vel = 30)
-        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 30) 
+        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (128,9), rhythm=0, vel = 40) 
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,114),rhythm=1, vel = 40)
+        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,115), rhythm=2, vel = 40)
+        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 40) 
         self.drums = []
         self.drums.append(self.drum1)
         self.drums.append(self.drum2)
@@ -113,7 +113,7 @@ class AudioController(object):
         
         self.highline_chan = 6
         self.highline_synth = self.synth3
-        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,108), (self.pitch,self.mode),vel=40)
+        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,98), (self.pitch,self.mode),vel=30)
         
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
@@ -138,7 +138,7 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
-        # print('made trans',trans)
+        print('made trans',trans)
         # make prl transformation, record new data
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
