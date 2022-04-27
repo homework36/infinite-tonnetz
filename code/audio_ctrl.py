@@ -106,7 +106,7 @@ class AudioController(object):
         
         self.highline_chan = 6
         self.highline_synth = self.synth3
-        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,106), (self.pitch,self.mode),vel=45)
+        self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,98), (self.pitch,self.mode),vel=45)
         
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
