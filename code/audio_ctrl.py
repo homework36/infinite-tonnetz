@@ -790,8 +790,9 @@ class Drum(NoteSequencer):
     def change_rhythm(self,rhythm):
         self.rhythm = np.array(RhythmBank[rhythm])
 
+Ornament1 = [[7,0,7],[0,7,0],[5,7],[7,5],[7,7],[0,0],[0,5]]
 class Jammer(SidePiece):
-    def __init__(self, sched, synth, channel, program, key, vel = 50):
+    def __init__(self, sched, synth, channel, program, key, ornament=Ornament1, vel = 50):
         self.sched = sched
         self.synth = synth
         self.channel = channel
@@ -807,7 +808,7 @@ class Jammer(SidePiece):
         # self.synth.cc(self.channel,91,40)
         
         self.idx_top = 0
-        self.ornament = [[7,0,7],[0,7,0],[5,7],[7,5],[7],[0],[0,5]]
+        self.ornament = ornament
         self.cur_base = None
         self.cur_mode = None
         self.length = 240
