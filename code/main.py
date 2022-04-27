@@ -177,6 +177,12 @@ class MainWidget(BaseWidget):
 
         if keycode[1] == 'k':
             self.audio_ctrl.stop_jazz()
+        
+        if keycode[1] == 'v':
+            self.audio_ctrl.play_bg_drum()
+
+        if keycode[1] == 'b':
+            self.audio_ctrl.stop_bg_drum()
 
 
 if __name__ == "__main__":
