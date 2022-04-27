@@ -12,20 +12,18 @@ class Player(object):
         self.space_objects = space_objects
         self.static_objects = static_objects
         self.near_planet = 0
-        # self.near_planet_min_dist = 10000
         self.last_tonnetz_seg = self.tonnetz.seg
         self.on_update()
         self.audio_ctrl.play_highline()
-        self.audio_ctrl.play_seventh()
-        
+
         
 
     def on_update(self):
         self.main_object_sound()
         self.sound_anim_effect()
 
-        # if self.near_planet == 0:
-            # self.audio_ctrl.pause_seventh()
+        if self.near_planet == 0:
+            self.audio_ctrl.pause_seventh()
         
         self.update_pos_at_bounadry()
 
@@ -119,7 +117,7 @@ class Player(object):
             elif type == 'planet':  # play seventh note
                 if dist <= touch_dist * 3:
                     self.near_planet += 1
-                    # self.audio_ctrl.play_seventh()
+                    self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)
             
             elif type == 'splanet2':

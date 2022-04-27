@@ -99,6 +99,12 @@ class AudioController(object):
         self.sidepiece_chan = 5
         self.sidepiece_synth = self.synth2
         self.sidepiece = SidePiece(self.sched, self.sidepiece_synth, self.sidepiece_chan, (128,33), (self.pitch,self.mode))
+        
+        self.soundeffect_chan = 2
+        self.soundeffect_synth = self.synth
+        self.soundeffect = ChromScaleSeq(self.sched, self.soundeffect_synth, self.soundeffect_chan,  (128,24), self.triad-24, vel=35, loop=False)  
+
+
         self.drum_chan = 10
         self.drum_synth = self.synth3
         self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (128,9), rhythm=0, vel = 40) 
@@ -150,18 +156,22 @@ class AudioController(object):
         self.chord_audio_svth.set_triad(self.seventh)
         self.sidepiece.set_key((self.pitch,self.mode))
         self.highline.set_key((self.pitch,self.mode))
+        self.soundeffect.set_pitches(self.triad-24)    
 
         # play chord in the background
         if self.backround_sound:
             self.chord_audio.start()
             if self.if_seventh:
                 self.chord_audio_svth.start()
-        
+
+        self.soundeffect.start()
+
         # update notes in other things
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
         self.chromscale.set_pitches(self.chromnotes)
+       
         for drum in self.drums:
             drum.set_pitches(self.triad)
 
@@ -569,8 +579,8 @@ class ChromScaleSeq(NoteSequencer):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        next_beat = quantize_tick_up(now, int(kTicksPerQuarter/4))
-        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
+        # next_beat = quantize_tick_up(now, int(kTicksPerQuarter/4))
+        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
 
     def _note_on(self, tick):
         # if looping, go back to beginning
