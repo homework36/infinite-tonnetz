@@ -89,10 +89,10 @@ class Player(object):
                     self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)
 
-                    if dist <= touch_dist:
-                        vel = int(np.interp(dist, (0, touch_dist), (80, 15)))
+                    if dist <= touch_dist*1.2:
+                        vel = int(np.interp(dist, (0, touch_dist*1.2), (90, 15)))
                         self.audio_ctrl.adjust_volume(
-                        self.audio_ctrl.synth2, self.audio_ctrl.melody_chan, vel)
+                        self.audio_ctrl.melody_synth, self.audio_ctrl.melody_chan, vel)
                         self.audio_ctrl.play_melody()
 
 

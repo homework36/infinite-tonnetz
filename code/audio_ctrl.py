@@ -620,6 +620,10 @@ class Arpeggiator2(object):
     def _noteon(self,tick):
   
         pitch = self.nextpitch()
+        if pitch >= 78:
+            pitch -= 12
+        if pitch <= 48:
+            pitch += 12
         self.lastpitch = pitch   
         self.synth.noteon(self.channel,pitch,self.vel) 
 
@@ -638,7 +642,7 @@ class Arpeggiator2(object):
         '''pitch selection process: will try to stay in the same pitch, and avoid moving too far,
         unless self.jump is set to a larger value
         when it's just launched, always pich the first in self.notes because that's the bass'''
-        self.length = np.random.choice([120,240,480],p=[.1,.3,.6])
+        self.length = np.random.choice([120,240,480],p=[.05,.3,.65])
         if self.lastpitch:
             ind = int(np.round(np.random.laplace(loc=self.ind,scale=self.jump)))
             if ind < 0 or ind >= len(self.possible_notes):
