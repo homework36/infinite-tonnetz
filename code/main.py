@@ -71,7 +71,7 @@ class MainWidget(BaseWidget):
             50, '../img/astronaut.png', 'astronaut'))
 
         self.space_objects.append(SpaceObject(
-            120, '../img/special_planet2.png', 'splanet'))
+            80, '../img/special_planet2.png', 'splanet'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
@@ -100,14 +100,15 @@ class MainWidget(BaseWidget):
         self.starship_anim_group.on_update()
         self.player.on_update()
 
-        self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
+        self.info.text = ''
+        # self.info.text = f'fps:{kivyClock.get_fps():.0f}\n'
 
-        self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
-        self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
-        self.info.text += f'position: {self.starship.get_curr_pos()}\n'
-        # self.info.text += f'{self.starship.rotate.angle}'
-        self.info.text += f'{self.objects.size()}\n'
-        self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
+        # self.info.text += 'x: ' + str(round(self.curr_pos['x'], 4)) + '\n'
+        # self.info.text += 'y: ' + str(round(self.curr_pos['y'], 4)) + '\n'
+        # self.info.text += f'position: {self.starship.get_curr_pos()}\n'
+        # # self.info.text += f'{self.starship.rotate.angle}'
+        # self.info.text += f'{self.objects.size()}\n'
+        # self.info.text += f'touch x: {self.touch_diff_x} y: {self.touch_diff_y}'
 
     def on_resize(self, win_size):
         self.tonnetz.on_resize(win_size)
@@ -126,6 +127,13 @@ class MainWidget(BaseWidget):
                 if 'x' in self.last_touch and 'y' in self.last_touch:
                     self.touch_diff_x = self.curr_touch['x'] - self.last_touch['x']
                     self.touch_diff_y = self.curr_touch['y'] - self.last_touch['y']
+                
+                # zoom in/out
+                if self.touch_diff_y < 0:
+                    self.player.zoom(_in=True)
+                elif self.touch_diff_y > 0:
+                    self.player.zoom(_in=False)
+                    
             else:
                 self.curr_touch = {}
                 self.touch_diff_x, self.touch_diff_y = 0, 0
@@ -133,10 +141,12 @@ class MainWidget(BaseWidget):
     def on_key_down(self, keycode, modifiers):
 
         if keycode[1] == 'up':
-            self.tonnetz.modify_seq_length(10.)
+            # self.tonnetz.modify_seq_length(10.)
+            self.player.zoom(_in=True)
 
         if keycode[1] == 'down':
-            self.tonnetz.modify_seq_length(-10.)
+            # self.tonnetz.modify_seq_length(-10.)
+            self.player.zoom(_in=False)
 
         # following commands are for debugging
         # may have conflicts with player
@@ -157,17 +167,23 @@ class MainWidget(BaseWidget):
             self.audio_ctrl.pause_seventh()
             self.audio_ctrl.stop_melody()
 
-        if keycode[1] == 'm':
-            self.audio_ctrl.play_modescale()
+        # if keycode[1] == 'm':
+        #     self.audio_ctrl.play_modescale()
 
-        if keycode[1] == 'n':
-            self.audio_ctrl.stop_modescale()
+        # if keycode[1] == 'n':
+        #     self.audio_ctrl.stop_modescale()
 
         if keycode[1] == 'j':
             self.audio_ctrl.play_jazz()
 
         if keycode[1] == 'k':
             self.audio_ctrl.stop_jazz()
+        
+        if keycode[1] == 'v':
+            self.audio_ctrl.play_bg_drum()
+
+        if keycode[1] == 'b':
+            self.audio_ctrl.stop_bg_drum()
 
 
 if __name__ == "__main__":

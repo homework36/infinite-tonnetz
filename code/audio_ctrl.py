@@ -28,7 +28,15 @@ import numpy as np
 # from pyrsistent import b
 from helper_function import *
 
-from pedalboard import Pedalboard, Reverb
+from pedalboard import Pedalboard, Reverb, Phaser
+
+
+# Make a new Pedalboard object that contains plugins, each with their own (optional) settings
+board = Pedalboard([
+    Phaser(rate_hz=1.0, depth=1.0, feedback=0.25, mix=1.0),
+    Reverb(room_size=0.5, wet_level=0.5)])
+
+
 
 Chromatics = np.array([12-i for i in range(13)]+[-24]) 
 
@@ -37,8 +45,8 @@ class AudioController(object):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.mixer = Mixer()
-        self.synth_bg = Synth()
-        self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.5))
+        self.synth_bg = SynthEffect(effect=Reverb(room_size=0.7, wet_level=0.7))
+        self.synth = SynthEffect(effect=board.process)
         self.synth2 = Synth()
 
         # create TempoMap, AudioScheduler
@@ -62,10 +70,9 @@ class AudioController(object):
         self.seventh = np.array([[10,11][self.mode]]) + self.pitch
         # print('seventh',self.seventh)
         self.if_seventh = False
-        self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
+        self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,99), self.triad, loop=False)
         self.chord_svth_chan = 0
-        self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (0,49), self.seventh, loop=False)
-        self.since_last_trans_count = 100
+        self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (8,28), self.seventh, loop=False)
         self.backround_sound = True # play background chord at the beginning
     
 
@@ -77,14 +84,26 @@ class AudioController(object):
         self.pitchlists = [(0, 2, 3, 5, 7, 8, 11, 12),\
             (0, 2, 4, 5, 7, 9, 11, 12)]
         self.make_notes()
-        self.arpeg_chan = 2
-        self.arpeg = Arpeggiator(self.sched, self.synth2, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
+        # self.arpeg_chan = 2
+        # self.arpeg_synth = self.synth2
+        # self.arpeg = Arpeggiator(self.sched, self.arpeg_synth, self.flashynotes, length = 240, channel = self.arpeg_chan, program = (0,26) )  
         self.melody_chan = 3
-        self.melody = Arpeggiator2(self.sched, self.synth2, self.melodynotes + 24, 480, self.melody_chan, program = (0,53) )   
+        self.melody_synth = self.synth_bg
+        self.melody = Arpeggiator2(self.sched, self.melody_synth, self.melodynotes + 24, 480, self.melody_chan, program = (8,40) )   
         self.chromscale_chan = 4
-        self.chromscale = ChromScaleSeq(self.sched, self.synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
+        self.chromscale_synth = self.synth2
+        self.chromscale = ChromScaleSeq(self.sched, self.chromscale_synth, self.chromscale_chan,  (0,14), self.chromnotes, vel=35, loop=False)  
         self.sidepiece_chan = 5
-        self.sidepiece = SidePiece(self.sched, self.synth, self.sidepiece_chan, (0,2), (self.pitch,self.mode))
+        self.sidepiece_synth = self.synth2
+        self.sidepiece = SidePiece(self.sched, self.sidepiece_synth, self.sidepiece_chan, (0,32), (self.pitch,self.mode))
+        self.drum_chan = 10
+        self.drum_synth = self.synth2
+        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,117)) 
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,118),rhythm=1,note=2)
+
+        # self.drum_chan2 = 9
+        # self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan2, (0,117), rhythm=2) 
+        # self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan2, (0,118), rhythm=3,note=1)
 
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
@@ -111,11 +130,12 @@ class AudioController(object):
     def melody_jump(self,num):
         self.melody.set_jump(num)
         
-    def change_flashyrhythm(self,length, articulation):
-        self.arpeg.set_rhythm(length, articulation)
+    # def change_flashyrhythm(self,length, articulation):
+    #     self.arpeg.set_rhythm(length, articulation)
 
 
     def make_prl(self, trans):
+        # print('made trans',trans)
         # make prl transformation, record new data
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
@@ -135,11 +155,36 @@ class AudioController(object):
         
         # update notes in other things
         self.make_notes()
-        self.arpeg.set_pitches(self.flashynotes)
+        # self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_pitches(self.melodynotes+24)
         self.chromscale.set_pitches(self.chromnotes)
+        self.drum1.set_pitches(self.triad)
+        self.drum2.set_pitches(self.triad)
         
-  
+    def play_bg_drum(self):
+        if not self.drum1.playing:
+            self.drum1.start()
+        if not self.drum2.playing:
+            self.drum2.start()
+
+    def stop_bg_drum(self):
+        if self.drum1.playing:
+            self.drum1.stop()
+        if self.drum2.playing:
+            self.drum2.stop()
+    
+    # def play_bg_drum2(self):
+    #     if not self.drum3.playing:
+    #         self.drum3.start()
+    #     if not self.drum4.playing:
+    #         self.drum4.start()
+
+    # def stop_bg_drum2(self):
+    #     if self.drum3.playing:
+    #         self.drum3.stop()
+    #     if self.drum4.playing:
+    #         self.drum4.stop()
+
 
     def play_astronaut(self, lan=1):
         # 1 == french
@@ -147,11 +192,15 @@ class AudioController(object):
         if lan == 1:
             if self.fr_reading.paused:
                 self.fr_reading.play()
+            if not self.jpn_reading.paused:
+                self.jpn_reading.pause()
         else:
             if self.jpn_reading.paused:
                 self.jpn_reading.play()
+            if not self.fr_reading.paused:
+                self.fr_reading.pause()
     
-    def pause_astronaut(self, lan=1):
+    def pause_astronaut(self):
         if not self.fr_reading.paused:
                 self.fr_reading.pause()
         if not self.jpn_reading.paused:
@@ -173,12 +222,10 @@ class AudioController(object):
     
     def play_jazz(self):
         if not self.sidepiece.playing:
-            self.backround_sound = False
             self.sidepiece.start()
 
     def stop_jazz(self):
         if self.sidepiece.playing:
-            self.backround_sound = True
             self.sidepiece.stop()
 
     def play_chromscale(self):
@@ -193,17 +240,16 @@ class AudioController(object):
         if self.melody.playing:
             self.melody.stop()
     
-    def play_modescale(self):
-        if not self.arpeg.playing:
-            self.arpeg.start()
+    # def play_modescale(self):
+    #     if not self.arpeg.playing:
+    #         self.arpeg.start()
     
-    def stop_modescale(self):
-        if self.arpeg.playing:
-            self.arpeg.stop()
+    # def stop_modescale(self):
+    #     if self.arpeg.playing:
+    #         self.arpeg.stop()
 
     # needed to update audio
     def on_update(self):
-        self.since_last_trans_count += 1
         self.audio.on_update()
 
     def adjust_volume(self, synth, chan_num, val):
@@ -223,7 +269,7 @@ class AudioController(object):
 
 # no looping
 class chord_audio(object):
-    def __init__(self, sched, synth, channel, program, triad, loop=False, vel = 50):
+    def __init__(self, sched, synth, channel, program, triad, loop=True, vel = 60):
    
         super(chord_audio, self).__init__()
         self.sched = sched
@@ -233,13 +279,13 @@ class chord_audio(object):
 
         self.triad = triad
         self.playing = False
-        self.length = 480*2
+        self.length = 480 * 2
         self.vel = vel
 
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
-        self.synth.cc(self.channel,91,40)
+        self.synth.cc(self.channel,91,127)
 
 
     def toggle(self):
@@ -279,8 +325,8 @@ class chord_audio(object):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
-        # next_beat = quantize_tick_up(now, kTicksPerQuarter)
-        self.on_cmd = self.sched.post_at_tick(self._note_on, now)
+        next_beat = quantize_tick_up(now, int(kTicksPerQuarter/2))
+        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
 
 
     def stop(self):
@@ -532,7 +578,6 @@ class Arpeggiator2(object):
         self.synth = synth
         self.channel = channel
         self.program = program
-        self.width, self.height = Window.width, Window.height
         
         self.notes = notes
         self.length = length
@@ -544,9 +589,9 @@ class Arpeggiator2(object):
 
         self.oldlength = None
         self.oldarticulation = None
-        self.vel = 25
+        self.vel = 50
         self.lastpitch = None
-        self.jump = 0.5
+        self.jump = 1.5
       
         if self.notes is not None:
             self.possible_notes = np.sort(np.concatenate((self.notes,self.notes+12,self.notes-12)))
@@ -575,6 +620,10 @@ class Arpeggiator2(object):
     def _noteon(self,tick):
   
         pitch = self.nextpitch()
+        if pitch >= 78:
+            pitch -= 12
+        if pitch <= 48:
+            pitch += 12
         self.lastpitch = pitch   
         self.synth.noteon(self.channel,pitch,self.vel) 
 
@@ -593,6 +642,7 @@ class Arpeggiator2(object):
         '''pitch selection process: will try to stay in the same pitch, and avoid moving too far,
         unless self.jump is set to a larger value
         when it's just launched, always pich the first in self.notes because that's the bass'''
+        self.length = np.random.choice([120,240,480],p=[.05,.3,.65])
         if self.lastpitch:
             ind = int(np.round(np.random.laplace(loc=self.ind,scale=self.jump)))
             if ind < 0 or ind >= len(self.possible_notes):
@@ -605,9 +655,8 @@ class Arpeggiator2(object):
             picknote = self.notes[0]
             self.ind = np.where(self.possible_notes==picknote)[0][0]
             return picknote
+        
 
-    # want to remove this redundant part later
-    ################################################
     def _noteoff(self,tick,pitch):
         self.synth.noteoff(self.channel,pitch)
 
@@ -652,8 +701,6 @@ class Arpeggiator2(object):
         if self.vel <= 80:
             self.vel = 80
     
-    ############################## end of redundant part
-
 class ChromScaleSeq(NoteSequencer):
     def __init__(self, sched, synth, channel, program, notes, vel = 40, loop=True, length = 48):
         super(NoteSequencer, self).__init__()
@@ -701,7 +748,7 @@ class ChromScaleSeq(NoteSequencer):
             self.length += val 
 
 class SidePiece(object):
-    def __init__(self, sched, synth, channel, program, key, vel = 50):
+    def __init__(self, sched, synth, channel, program, key, vel = 60):
    
         super(SidePiece, self).__init__()
         self.sched = sched
@@ -720,27 +767,53 @@ class SidePiece(object):
         
         self.idx_top = 0
         # ii - V - i/I - iv/IV
-        self.secondary = np.array([2, 7, 0, 5]) + self.pitch
+        self.secondary = (np.array([2, 7, 0, 5]) + self.pitch)%12+48
         self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
         self.secondary_ind = 0
         self.scales = [[100,0, 2, 3, 5, 7, 8, 11, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
+        self.scales_basenotes = [[0,3,7,10],[0,4,7,11]]
+        self.ornament = [[-1,0],[2,-1,0],[2,0],[0]]
+        self.cur_base = None
+        self.cur_mode = None
+        self.length = 120
         self.make_notes()
 
-    def make_notes(self):
-        cur_base = self.secondary[self.secondary_ind]
-        cur_mode = self.secondary_chord[self.secondary_ind]
-        note_num = np.random.randint(2,9)
-        notes_top = [self.scales[cur_mode][np.random.choice(range(9))] for i in range(note_num)]
-        self.notes_top = np.zeros(note_num)
-        for i in range(note_num):
-            cur = notes_top[i]
+    def make_notes(self,change_chord=True):
+        self.cur_base = self.secondary[self.secondary_ind]
+        self.cur_mode = self.secondary_chord[self.secondary_ind]
+        cur_scales_base = self.scales_basenotes[self.cur_mode]
+        if change_chord:
+            self.idx_top = 0
+            temp_notes = []
+            for i in range(4):
+                base_note = cur_scales_base[np.random.randint(0,4)]
+                ornament = self.ornament[np.random.choice(range(4),p=[.2,.2,.2,.4])]
+                temp_notes += [note + base_note for note in ornament]
+                temp_notes.append(100)
+            len_notes = len(temp_notes)
+            beats = int(np.floor(len_notes/4)*4)
+            temp_notes = temp_notes[:beats-2]
+            temp_notes.append(0)
+            self.notes_top_frame = np.array(temp_notes)
+            self.note_num = len(self.notes_top_frame)
+            # self.notes_top_frame = [self.scales[self.cur_mode][np.random.choice(range(9))] for i in range(self.note_num)]
+            # self.notes_top_frame = temp_notes
+            self.secondary_ind += 1
+            self.secondary_ind %= 4
+        
+        
+        self.notes_top = np.zeros(self.note_num)
+        for i in range(self.note_num):
+            cur = self.notes_top_frame[i]
             if cur < 100:
-                self.notes_top[i] = notes_top[i] + cur_base
-        self.length_top = 480/np.random.choice(range(1,5),note_num)
-        self.length_bass = int(min(np.round(np.sum(self.length_top)/480)*480,480))
-        self.secondary_ind += 1
-        self.secondary_ind %= 4
-        self.notes_bass = np.array([[0,3,7,10],[0,4,7,11]][cur_mode]) + cur_base
+                temp_note = cur + self.cur_base
+                while temp_note > 72:
+                    temp_note -= 12
+                self.notes_top[i] = temp_note
+        
+        self.notes_bass = np.array([[0,3,7,10],[0,4,7,11]][self.cur_mode]) + self.cur_base
+        self.notes_bass = self.notes_bass%12 + 60
+
       
     def toggle(self):
         if self.playing:
@@ -755,40 +828,37 @@ class SidePiece(object):
         if self.idx_top >= len(self.notes_top):
             self.idx_top = 0
             self.loop += 1
-            if self.loop >= 4:
+            if self.loop >= 1:
                 self.make_notes()
                 self.loop = 0
-        # play bass
-        if self.idx_top == 0:
-            for pitch in self.notes_bass:
-                if pitch != 0: # pitch 0 is a rest
-                    # play note and post note off
-                    self.synth.noteon(self.channel, pitch, self.vel)
-                    off_tick = tick + self.length_bass * .95 # slightly detached 
-                    self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
-
-        # play top
+        
         if self.idx_top < len(self.notes_top):
             pitch = int(self.notes_top[self.idx_top])
-            length = int(self.length_top[self.idx_top])
+            # length = int(self.length_top[self.idx_top])
             if pitch != 0: # pitch 0 is a rest
                 # play note and post note off
                 self.synth.noteon(self.channel, pitch, self.vel)
-                off_tick = tick + length * .95 # slightly detached 
+                off_tick = tick + self.length * .95 # slightly detached 
                 self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, pitch)) 
-
+            if self.idx_top % 4 == 3:
+                for note in self.notes_bass:
+                    cur_note = int(note)
+                    self.synth.noteon(self.channel, cur_note, self.vel)
+                    off_tick = tick + self.length * .95 # slightly detached 
+                    self.off_cmd.append(self.sched.post_at_tick(self._note_off, off_tick, cur_note))  
             # schedule the next note:
             self.idx_top += 1
-            self.on_cmd = self.sched.post_at_tick(self._note_on, tick + length)
+            self.on_cmd = self.sched.post_at_tick(self._note_on, tick + self.length)
         else:
             self.playing = False
-        
-        
-    
 
+        
     def set_key(self, new_key):
         self.pitch, self.mode = new_key
-        self.make_notes()
+        self.pitch = self.pitch % 12 + 60
+        self.secondary = np.array([2, 7, 0, 5]) + self.pitch
+        self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
+        self.make_notes(change_chord=False)
 
     def start(self):
         if self.playing:
@@ -823,3 +893,47 @@ class SidePiece(object):
     def _note_off(self, tick, pitch):
         # terminate current note:
         self.synth.noteoff(self.channel, pitch)
+
+
+RhythmBank = [
+[0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1],
+[0,0,0,0, 1,0,0,1, 0,1,0,0, 0,0,0,0],
+[1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+[1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0]]
+
+class Drum(NoteSequencer):
+    def __init__(self, sched, synth, notes, channel, program, vel=30, rhythm=0, note=0):
+        
+        self.sched = sched
+        self.synth = synth
+        self.channel = channel
+        self.program = program
+
+        self.triad = notes
+        self.rhythm = np.array(RhythmBank[rhythm])
+        self.noteidx = note
+        self.make_notes()
+        self.loop = True
+        self.playing = False
+
+        self.on_cmd = None
+        self.off_cmd = None
+        self.idx = 0
+
+        self.vel = vel
+        self.synth.cc(self.channel,7,vel)
+    
+
+    def set_pitches(self, pitches):
+        # self.notes = np.sort(np.array(pitches))
+        self.triad = pitches
+        self.make_notes()
+
+    def make_notes(self):
+        note = self.triad[self.noteidx]
+        note = note % 12 + 12
+        top = note * self.rhythm
+        self.notes = [[120,top[i]] for i in range(16)]
+   
+    def change_rhythm(self,rhythm):
+        self.rhythm = np.array(RhythmBank[rhythm])
