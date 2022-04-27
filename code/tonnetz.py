@@ -89,30 +89,39 @@ class StarLine(InstructionGroup):
            last_pos: last position of main object'''
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
-        if self.last_cross_pt is not None:
-            if np.linalg.norm(temp-self.last_cross_pt) <= 10 and moving:
-                # print('preventing duplicate')
-                return False
+        # if self.last_cross_pt is not None:
+        #     if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+        #         print('preventing duplicate')
+        #         return False
 
         if self.type == 'p':
+            # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
+            # print(self.type,'trans with line',self.cx,self.cy)
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
-                # print(self.type,'trans with line',self.cx,self.cy)
-                self.last_cross_pt = np.array([self.cx,self.cy])
+                if self.last_cross_pt is not None:
+                    if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                        return False
+                self.last_cross_pt = temp
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
                 # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
                 # print(self.type,'trans with line',self.cx,self.cy)
-                self.last_cross_pt = np.array([self.cx,self.cy])
+                if self.last_cross_pt is not None:
+                    if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                        return False
+                self.last_cross_pt = temp
                 return True
-
-            self.last_cross_pt = None
-            return False
+            else:
+                self.last_cross_pt = None
+                return False
 
         if self.intersect(cur_pos, last_pos, self.end1, self.end2):
             # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
             # print(self.type,'trans with line',self.cx,self.cy)
-            self.last_cross_pt = np.array([self.cx,self.cy])
+            if self.last_cross_pt is not None:
+                if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                    return False
+            self.last_cross_pt = temp
             return True
         else:
             self.last_cross_pt = None
@@ -274,7 +283,7 @@ class Tonnetz(InstructionGroup):
     
     def modify_seq_length(self,val):
         temp_seg = self.seg + val
-        self.seg = max(300,min(self.width/1.5,temp_seg))
+        self.seg = max(400,min(self.width/1.5,temp_seg))
         self.seg_height = self.seg*sq3/2
         self.origin[0] %= self.seg * 2
         self.origin[1] %= self.seg_height * 2
