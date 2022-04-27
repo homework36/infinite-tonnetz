@@ -99,7 +99,7 @@ class AudioController(object):
         self.drum_chan = 10
         self.drum_synth = self.synth2
         self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,117)) 
-        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,118),rhythm=1,note=2)
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-1, (0,118),rhythm=3,note=2)
 
         # self.drum_chan2 = 9
         # self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan2, (0,117), rhythm=2) 
@@ -702,7 +702,7 @@ class Arpeggiator2(object):
             self.vel = 80
     
 class ChromScaleSeq(NoteSequencer):
-    def __init__(self, sched, synth, channel, program, notes, vel = 40, loop=True, length = 48):
+    def __init__(self, sched, synth, channel, program, notes, vel = 40, loop=True, length = 30):
         super(NoteSequencer, self).__init__()
         self.sched = sched
         self.synth = synth
@@ -719,6 +719,26 @@ class ChromScaleSeq(NoteSequencer):
         self.vel = vel
         self.synth.cc(self.channel,1,50)
         self.length = length
+
+
+    def start(self):
+        """
+        Starts playback.
+        """
+
+        if self.playing:
+            return
+
+        self.playing = True
+        self.synth.program(self.channel, self.program[0], self.program[1])
+
+        # start from the beginning
+        self.idx = 0
+
+        # post the first note on the next quarter-note:
+        now = self.sched.get_tick()
+        next_beat = quantize_tick_up(now, int(kTicksPerQuarter/4))
+        self.on_cmd = self.sched.post_at_tick(self._note_on, next_beat)
 
     def _note_on(self, tick):
         # if looping, go back to beginning
@@ -767,11 +787,14 @@ class SidePiece(object):
         
         self.idx_top = 0
         # ii - V - i/I - iv/IV
-        self.secondary = (np.array([2, 7, 0, 5]) + self.pitch)%12+48
-        self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
+        # self.secondary = (np.array([2, 7, 0, 5]) + self.pitch)%12+48
+        # self.secondary_chord = [[0,1,0,0],[0,1,1,1]][self.mode]
+        # descending fifth
+        self.secondary = (np.array([0, 4, -1, 3, -2, 2, 5, 0]) + self.pitch)%12+48
+        self.secondary_chord = [[0,0,1,1, 1,2,1,0 ],[1,1,0,0, 0,0,1,1]][self.mode]
         self.secondary_ind = 0
         self.scales = [[100,0, 2, 3, 5, 7, 8, 11, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
-        self.scales_basenotes = [[0,3,7,10],[0,4,7,11]]
+        self.scales_basenotes = [[0,3,7,10],[0,4,7,11],[0,3,6,12]]
         self.ornament = [[-1,0],[2,-1,0],[2,0],[0]]
         self.cur_base = None
         self.cur_mode = None
@@ -828,9 +851,10 @@ class SidePiece(object):
         if self.idx_top >= len(self.notes_top):
             self.idx_top = 0
             self.loop += 1
-            if self.loop >= 1:
-                self.make_notes()
-                self.loop = 0
+            self.make_notes()
+            # if self.loop >= 1:
+            #     self.make_notes()
+            #     self.loop = 0
         
         if self.idx_top < len(self.notes_top):
             pitch = int(self.notes_top[self.idx_top])
@@ -898,7 +922,7 @@ class SidePiece(object):
 RhythmBank = [
 [0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1],
 [0,0,0,0, 1,0,0,1, 0,1,0,0, 0,0,0,0],
-[1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+[0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
 [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0]]
 
 class Drum(NoteSequencer):
@@ -931,7 +955,7 @@ class Drum(NoteSequencer):
 
     def make_notes(self):
         note = self.triad[self.noteidx]
-        note = note % 12 + 12
+        note = note % 12 + 36
         top = note * self.rhythm
         self.notes = [[120,top[i]] for i in range(16)]
    

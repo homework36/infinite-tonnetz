@@ -114,7 +114,7 @@ class Player(object):
                     self.audio_ctrl.stop_jazz()
 
                 if dist <= self.last_tonnetz_seg:
-                    vel = int(np.interp(dist, (0, self.last_tonnetz_seg), (40, 10)))
+                    vel = int(np.interp(dist, (0, self.last_tonnetz_seg), (60, 10)))
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.drum_synth, self.audio_ctrl.drum_chan, vel)
                     self.audio_ctrl.play_bg_drum()
