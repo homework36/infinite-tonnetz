@@ -19,6 +19,14 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
    cd code
    ```
 
+4. Go to the app folder, install the required packages by running this command
+
+   ```
+   conda install --file requirements.txt
+   ```
+
+   
+
 ##### Step 2: Connect with your smartphone (full description [here](https://heliotrope-script-d84.notion.site/Send-OSC-from-phone-to-PC-55ec4f7e780e49d68cd78e8dade89ea5))
 
 *** *IMPORTANT: Make sure your phone and laptop/PC are connected to the same wireless network or hotspot***
