@@ -104,8 +104,8 @@ class Player(object):
                     i.on_update(0, start_anim=True)
 
             elif type == 'astronaut':  # play recording
-                if dist < astronaut_dist:
-                    vel = np.interp(dist, (0, astronaut_dist), (0.12, 0.01))
+                if dist < self.last_tonnetz_seg:
+                    vel = np.interp(dist, (0, self.last_tonnetz_seg), (0.15, 0.01))
                     self.audio_ctrl.adjust_astronaut(vel)
                     self.audio_ctrl.play_astronaut(lan=i.rand_lan)
                     i.on_update(0, start_anim=True)
@@ -121,8 +121,8 @@ class Player(object):
                     i.on_update(0, start_anim=True)
             
             elif type == 'splanet2':
-                if dist <= touch_dist*2:
-                    vel = int(np.interp(dist, (0, touch_dist*2), (90, 15)))
+                if dist <= self.last_tonnetz_seg:
+                    vel = int(np.interp(dist, (0, self.last_tonnetz_seg), (90, 15)))
                     self.audio_ctrl.adjust_volume(
                     self.audio_ctrl.melody_synth, self.audio_ctrl.melody_chan, vel)
                     self.audio_ctrl.play_melody()
@@ -133,15 +133,19 @@ class Player(object):
 
 
             elif type == 'splanet':
-                if dist <= touch_dist * 3:
-                    vel = int(np.interp(dist, (0, touch_dist * 3), (70, 15)))
+                if dist <= self.last_tonnetz_seg:
+                    vel = int(np.interp(dist, (0, self.last_tonnetz_seg), (70, 15)))
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.sidepiece_synth, self.audio_ctrl.sidepiece_chan, vel)
                     self.audio_ctrl.play_jazz()
+                    self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.climax_synth, self.audio_ctrl.climax_chan, vel)
+                    self.audio_ctrl.climax.start()
                     i.on_update(0, start_anim=True)
 
                 else:
                     self.audio_ctrl.stop_jazz()
+                    self.audio_ctrl.climax.stop()
 
 
 
