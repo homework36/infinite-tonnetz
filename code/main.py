@@ -52,15 +52,15 @@ class MainWidget(BaseWidget):
         self.touch_diff_x, self.touch_diff_y = 0, 0
 
     def add_space_objects(self):
-        planet_weights = [0.1, 0.3, 0.3, 0.3]
-        planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
+        # planet_weights = [0.1, 0.3, 0.3, 0.3]
+        # planet_choices = ['special_planet', 'planet1', 'planet2', 'planet3']
 
         self.space_objects = []
 
         for _ in range(5):  # create planets
-            rand_planet = np.random.choice(planet_choices, p=planet_weights)
+            # rand_planet = np.random.choice(planet_choices, p=planet_weights)
             self.space_objects.append(SpaceObject(np.random.randint(
-                30, 60), '../img/'+rand_planet+'.png', 'planet'))
+                30, 60), '../img/planet'+str(np.random.choice(range(1,5)))+'.png', 'planet'))
 
         for _ in range(20):  # create stars
             self.space_objects.append(SpaceObject(
@@ -72,6 +72,9 @@ class MainWidget(BaseWidget):
 
         self.space_objects.append(SpaceObject(
             80, '../img/special_planet2.png', 'splanet'))
+
+        self.space_objects.append(SpaceObject(
+            80, '../img/special_planet.png', 'splanet2'))
 
         for obj in self.space_objects:
             self.objects.add(obj)  # to be changed to anim_group
@@ -174,16 +177,16 @@ class MainWidget(BaseWidget):
             self.audio_ctrl.stop_modescale()
 
         if keycode[1] == 'j':
-            self.audio_ctrl.play_jazz()
+            self.audio_ctrl.climax.start()
 
         if keycode[1] == 'k':
-            self.audio_ctrl.stop_jazz()
+            self.audio_ctrl.climax.stop()
         
         if keycode[1] == 'v':
-            self.audio_ctrl.play_bg_drum()
+            self.audio_ctrl.soundeffect.start()
 
         if keycode[1] == 'b':
-            self.audio_ctrl.stop_bg_drum()
+            self.audio_ctrl.soundeffect.stop()
 
         if keycode[1] == '[':
             self.audio_ctrl.play_highline()
@@ -197,4 +200,5 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 3, 'Need arguments ip and port'
     assert sys.argv[2].isdigit() and int(
         sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
+
     run(MainWidget(sys.argv[1], sys.argv[2]))

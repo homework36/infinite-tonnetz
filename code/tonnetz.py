@@ -46,8 +46,17 @@ class StarLine(InstructionGroup):
         self.width, self.height = Window.width, Window.height
         self.range = range
         self.last_cross_pt = None
-
+        self.color = Color(1, 1, 1)
+        self.color.a = 0.3
+        self.add(self.color)
+        self.color_change_elapse = 0
         self.add(self.line)
+        if self.type == 'r':
+            self.threshold = 20
+        elif self.type == 'l':
+            self.threshold = 20
+        else:
+            self.threshold = 20
     
     def update_line(self, dx, dy):
         self.cx += dx
@@ -87,46 +96,57 @@ class StarLine(InstructionGroup):
     def check_cross(self, cur_pos, last_pos, moving=False):
         '''pos: current position of main object
            last_pos: last position of main object'''
+        self.color_change_elapse += 1
         temp = np.array([self.cx,self.cy])
         # avoid duplicate crossing
-        # if self.last_cross_pt is not None:
-        #     if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
-        #         print('preventing duplicate')
-        #         return False
 
         if self.type == 'p':
             # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
             # print(self.type,'trans with line',self.cx,self.cy)
             if cur_pos[1] >= self.cy and last_pos[1] <= self.cy:
-                if self.last_cross_pt is not None:
-                    if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
-                        return False
+                if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= self.threshold and moving:
+                    self.change_color(default=False)
+                    return False
                 self.last_cross_pt = temp
+                self.change_color()
                 return True
             elif cur_pos[1] <= self.cy and last_pos[1] >= self.cy:
                 # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
                 # print(self.type,'trans with line',self.cx,self.cy)
-                if self.last_cross_pt is not None:
-                    if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
+                if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= self.threshold and moving:
+                        self.change_color(default=False)
                         return False
                 self.last_cross_pt = temp
+                self.change_color()
                 return True
             else:
                 self.last_cross_pt = None
+                self.change_color(default=False)
+                return False
+        else:
+            # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos,'line',self.cx,self.cy)
+            if self.intersect(cur_pos, last_pos, self.end1, self.end2):
+                if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= self.threshold and moving:
+                    self.change_color(default=False)
+                    # print(self.type,'PREVENT DUPLICATE',self.cx,self.cy)
+                    return False
+                self.last_cross_pt = temp
+                self.change_color()
+                print(self.type,'crossing',self.cx,self.cy)
+                return True
+            else:
+                # print(self.type,'not crossing',self.cx,self.cy)
+                self.last_cross_pt = None
+                self.change_color(default=False)
                 return False
 
-        if self.intersect(cur_pos, last_pos, self.end1, self.end2):
-            # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos)
-            # print(self.type,'trans with line',self.cx,self.cy)
-            if self.last_cross_pt is not None:
-                if np.linalg.norm(temp-self.last_cross_pt) <= 5 and moving:
-                    return False
-            self.last_cross_pt = temp
-            return True
+    def change_color(self, default=True):
+        if default:
+            self.color.rgb = (.7,.6,.2)
         else:
-            self.last_cross_pt = None
-            return False
-        
+            if self.color_change_elapse >= 30:
+                self.color_change_elapse = 0
+                self.color.rgb = (1.,1.,1.)
 
         
 
@@ -139,8 +159,8 @@ class Tonnetz(InstructionGroup):
         self.seg = seg_length
         self.seg_height = self.seg*sq3/2
         self.origin = np.array(origin)
-        self.origin[0] %= self.seg * 2
-        self.origin[1] %= self.seg_height * 2
+        self.origin[0] %= np.ceil(Window.width/self.seg/2)*self.seg*2 
+        self.origin[1] %= np.ceil(Window.height/self.seg_height/2)*self.seg_height*2
         self.line_list_p = []
         self.line_list_r = []
         self.line_list_l = []
@@ -173,8 +193,8 @@ class Tonnetz(InstructionGroup):
                 self.children.remove(line)
 
         self.line_list_p = []
-        num_p_p = ceil((self.height-self.origin[1])/self.seg_height) + 2
-        num_p_m = ceil(self.origin[1]/self.seg_height) + 2
+        num_p_p = ceil((self.height-self.origin[1])/self.seg_height)+2
+        num_p_m = ceil(self.origin[1]/self.seg_height)+2
         for i in range(int(num_p_p)):
             self.line_list_p.append(StarLine((self.origin[0],self.origin[1]+self.seg_height*i),self.seg,'p'))
         for i in range(1,int(num_p_m)):
@@ -193,8 +213,8 @@ class Tonnetz(InstructionGroup):
 
         self.line_list_r = []
         self.line_list_l = []
-        num_rl_p = ceil((self.width-self.origin[0])/self.seg) + 2
-        num_rl_m = ceil(self.origin[0]/self.seg) + 2
+        num_rl_p = ceil((self.width-self.origin[0])/self.seg)+2
+        num_rl_m = ceil(self.origin[0]/self.seg)+2
 
         for i in range(int(num_rl_p)):
             self.line_list_r.append(StarLine((self.origin[0]+self.seg*i,self.origin[1]),self.seg,'r'))
@@ -203,7 +223,7 @@ class Tonnetz(InstructionGroup):
             self.line_list_r.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),self.seg,'r'))
             self.line_list_l.append(StarLine((self.origin[0]-self.seg*i,self.origin[1]),self.seg,'l'))
     
-        num_rl_leftright = ceil(self.height/sq3/self.seg) + 2
+        num_rl_leftright = ceil(self.height/sq3/self.seg)+2
         for i in range(num_rl_leftright):
             self.line_list_l.append(StarLine((self.origin[0]-(i+num_rl_m)*self.seg,self.origin[1]),self.seg,'l'))
             self.line_list_r.append(StarLine((self.origin[0]+(i+num_rl_p)*self.seg,self.origin[1]),self.seg,'r'))
@@ -213,7 +233,7 @@ class Tonnetz(InstructionGroup):
 
         for line in self.line_list_l:
             self.add(line)
-    
+
     
     def on_resize(self, win_size):
         # remove first
@@ -232,19 +252,18 @@ class Tonnetz(InstructionGroup):
     def on_boundary(self, dx, dy):
         x_adj = 0
         y_adj = 0
-        # print('here', dx, dy)
         if dx or dy:
             self.last_origin = self.origin.copy()
 
         if dx:
             x_adj = dx
             self.origin[0] += dx
-            self.origin[0] %= self.seg * 2
+            self.origin[0] %= np.ceil(Window.width/self.seg/2)*self.seg*2 
             
         if dy:
             y_adj = dy
             self.origin[1] += dy
-            self.origin[1] %= self.seg_height * 2
+            self.origin[1] %= np.ceil(Window.height/self.seg_height/2)*self.seg_height*2 
 
         if dx or dy:
             # print()
@@ -259,10 +278,14 @@ class Tonnetz(InstructionGroup):
             line.update_line(diff_origin[0],diff_origin[1])
 
     def on_update(self):
+        # print()
+        # print('totle lines',len(self.line_list))
+        # for line in self.line_list:
+            # print('line',line.type,line.cx,line.cy)
         if self.in_boundary:
             self.check_lines()
         else:
-            pass
+            return
 
     def check_lines(self,dx=0,dy=0):
         if self.obj is not None and self.callback is not None:
