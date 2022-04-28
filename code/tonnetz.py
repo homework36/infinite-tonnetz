@@ -128,12 +128,12 @@ class StarLine(InstructionGroup):
             if self.intersect(cur_pos, last_pos, self.end1, self.end2):
                 if self.last_cross_pt is not None and np.linalg.norm(temp-self.last_cross_pt) <= self.threshold and moving:
                     self.change_color(default=False)
-                    print(self.type,'PREVENT DUPLICATE',self.cx,self.cy)
+                    # print(self.type,'PREVENT DUPLICATE',self.cx,self.cy)
                     return False
                 self.last_cross_pt = temp
                 self.change_color()
-                print()
-                print(self.type,'crossing',self.cx,self.cy)
+                # print()
+                # print(self.type,'crossing',self.cx,self.cy)
                 return True
             else:
                 self.last_cross_pt = None

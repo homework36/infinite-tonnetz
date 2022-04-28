@@ -24,6 +24,7 @@ class Player(object):
 
         if self.near_planet == 0:
             self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.climax.stop()
         
         self.update_pos_at_bounadry()
 
@@ -52,7 +53,11 @@ class Player(object):
     def main_object_sound(self):
         dx = np.abs(self.main_obj.dx)
         dy = np.abs(self.main_obj.dy)
-        
+        maxvel = max(dx,dy)
+        vel = int(np.interp(maxvel, (0, 10), (20,100)))
+        self.audio_ctrl.adjust_volume(
+                        self.audio_ctrl.synth_bg,1, vel)
+        # print('current spd',dx,dy)
         if dx >= 2 or dy >= 2:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.play_modescale()
@@ -64,7 +69,7 @@ class Player(object):
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(160)
             return
-        elif dx >= 1 or dy >= 1:
+        elif dx >= 0.7 or dy >= 0.7:
             self.audio_ctrl.play_bg_drum(idx=[0,1])
             self.audio_ctrl.stop_bg_drum(idx=[2,3])
             self.audio_ctrl.play_modescale()
@@ -115,10 +120,17 @@ class Player(object):
                 
 
             elif type == 'planet':  # play seventh note
-                if dist <= touch_dist * 3:
+                if dist <= self.last_tonnetz_seg:
                     self.near_planet += 1
                     self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)
+                    if dist <= touch_dist:
+                        # vel = int(np.interp(dist, (0, touch_dist), (70, 15)))
+                        # self.audio_ctrl.adjust_volume(
+                        # self.audio_ctrl.climax_synth, self.audio_ctrl.climax_chan, vel)
+                        self.audio_ctrl.climax.start()
+                    
+                    
             
             elif type == 'splanet2':
                 if dist <= self.last_tonnetz_seg:
@@ -138,14 +150,11 @@ class Player(object):
                     self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.sidepiece_synth, self.audio_ctrl.sidepiece_chan, vel)
                     self.audio_ctrl.play_jazz()
-                    self.audio_ctrl.adjust_volume(
-                        self.audio_ctrl.climax_synth, self.audio_ctrl.climax_chan, vel)
-                    self.audio_ctrl.climax.start()
                     i.on_update(0, start_anim=True)
 
                 else:
                     self.audio_ctrl.stop_jazz()
-                    self.audio_ctrl.climax.stop()
+                    
 
 
 

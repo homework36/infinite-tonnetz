@@ -177,16 +177,16 @@ class MainWidget(BaseWidget):
             self.audio_ctrl.stop_modescale()
 
         if keycode[1] == 'j':
-            self.audio_ctrl.play_jazz()
-
-        if keycode[1] == 'k':
-            self.audio_ctrl.stop_jazz()
-        
-        if keycode[1] == 'v':
             self.audio_ctrl.climax.start()
 
-        if keycode[1] == 'b':
+        if keycode[1] == 'k':
             self.audio_ctrl.climax.stop()
+        
+        if keycode[1] == 'v':
+            self.audio_ctrl.soundeffect.start()
+
+        if keycode[1] == 'b':
+            self.audio_ctrl.soundeffect.stop()
 
         if keycode[1] == '[':
             self.audio_ctrl.play_highline()

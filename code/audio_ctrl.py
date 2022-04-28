@@ -68,7 +68,7 @@ class AudioController(object):
         self.if_seventh = False
         self.chord_audio = chord_audio(self.sched, self.synth_bg, 1, (0,49), self.triad, loop=False)
         self.chord_svth_chan = 0
-        self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (8,28), self.seventh, loop=False)
+        self.chord_audio_svth = chord_audio(self.sched, self.synth_bg, self.chord_svth_chan, (0,99), self.seventh, loop=False)
         self.backround_sound = True # play background chord at the beginning
     
 
@@ -86,7 +86,6 @@ class AudioController(object):
         self.arpeg.jump = 0.5
         self.melody_chan = 3
         self.melody_synth = self.synth
-        # self.melody = Arpeggiator2(self.sched, self.melody_synth, self.melodynotes + 24, 480, self.melody_chan, program = (8,40) ) 
         self.melody = Jammer2(self.sched, self.melody_synth, self.melody_chan, (0,68),(self.pitch,self.mode))   
         self.chromscale_chan = 4
         self.chromscale_synth = self.synth2
@@ -95,17 +94,17 @@ class AudioController(object):
         self.sidepiece_synth = self.synth2
         self.sidepiece = SidePiece(self.sched, self.sidepiece_synth, self.sidepiece_chan, (128,33), (self.pitch,self.mode))
         
-        self.soundeffect_chan = 2
+        self.soundeffect_chan = 10
         self.soundeffect_synth = self.synth
-        self.soundeffect = ChromScaleSeq(self.sched, self.soundeffect_synth, self.soundeffect_chan,  (128,24), self.triad-24, vel=35, loop=False)  
-       
+        self.soundeffect = ChromScaleSeq(self.sched, self.soundeffect_synth, self.soundeffect_chan,  (8,116), self.triad[:2]-24,  vel=80, loop=False)  
+        self.soundeffect.length = 160
 
-        self.drum_chan = 10
+        self.drum_chan = 9
         self.drum_synth = self.synth3
         self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (128,9), rhythm=0, vel = 45) 
-        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (128,24),rhythm=1, vel = 45)
-        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,118), rhythm=2, vel = 45)
-        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 45) 
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (8,116),rhythm=1, vel = 60)
+        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,118), rhythm=2, vel = 60)
+        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 60) 
         self.drums = []
         self.drums.append(self.drum1)
         self.drums.append(self.drum2)
@@ -118,8 +117,9 @@ class AudioController(object):
 
         self.climax_synth = self.synth
         self.climax_chan = 0
-        self.climax = Jammer(self.sched, self.climax_synth, self.climax_chan, (0,79),(self.pitch,self.mode),vel=45,ornament=Ornament2)
-        self.climax.set_length(120)
+        self.climax = Jammer(self.sched, self.climax_synth, self.climax_chan, (0,99),(self.pitch,self.mode),vel=65,ornament=Ornament2)
+        self.climax.set_length(160)
+        self.climax.loop_max = 8
 
         self.jpn_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_jpn.wav'),loop=True)
         self.fr_reading = WaveGenerator(WaveFile('../sound/LPP_ch1_fr.wav'),loop=True)
@@ -146,7 +146,7 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
-        # print('made trans',trans)
+        print('made trans',trans)
         # make prl transformation, record new data
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
@@ -159,7 +159,7 @@ class AudioController(object):
         self.sidepiece.set_key((self.pitch,self.mode))
         self.highline.set_key((self.pitch,self.mode))
         self.climax.set_key((self.pitch,self.mode))
-        self.soundeffect.set_pitches(self.triad-24)    
+        self.soundeffect.set_pitches(self.triad[:2]-24)    
 
         # self.soundeffect.start()
         # play chord in the background
@@ -174,7 +174,6 @@ class AudioController(object):
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
         self.melody.set_key((self.pitch,self.mode))
-        # self.melody.set_pitches(self.melodynotes+24)
         self.chromscale.set_pitches(self.chromnotes)
         
        
@@ -303,7 +302,8 @@ class chord_audio(object):
         self.on_cmd = None
         self.off_cmd = []
         self.loop = loop
-        self.synth.cc(self.channel,91,127)
+        self.synth.cc(self.channel,91,100)
+        self.synth.cc(self.channel,64,65)
 
 
     def toggle(self):
@@ -327,13 +327,16 @@ class chord_audio(object):
     ############################################
 
     def set_triad(self, new_triad):
+        self.synth.cc(self.channel,64,60)
         self.triad = new_triad
         # if not self.loop:
         #     self.stop()
         #     self.start()
         self.fade_out()
+        
 
     def start(self):
+        self.synth.cc(self.channel,64,65)
         if self.playing:
             return
         self.synth.cc(self.channel,7,self.vel)
@@ -641,7 +644,7 @@ class SidePiece(object):
         self.secondary = (np.array([0, 4, -1, 3, -2, 2, 5, 0]) + self.pitch)%12+48
         self.secondary_chord = [[0,0,1,1, 1,2,1,0 ],[1,1,0,0, 0,0,1,1]][self.mode]
         self.secondary_ind = 0
-        self.scales = [[100,0, 2, 3, 5, 7, 8, 11, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
+        self.scales = [[100,0, 2, 3, 5, 7, 8, 10, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
         self.scales_basenotes = [[0,3,7,10],[0,4,7,11],[0,3,6,12]]
         self.ornament = [[-1,0],[2,-1,0],[2,0],[0]]
         self.cur_base = None
@@ -817,7 +820,7 @@ class Drum(NoteSequencer):
         self.rhythm = np.array(RhythmBank[rhythm])
 
 Ornament1 = [[7,0,7],[0,7,0],[5,7],[7,5],[7,7],[0,0]]
-Ornament2 = [[100,7],[100,0],[7,0],[0,7],[7,7],[0,0]]
+Ornament2 = [[100,7],[100,0],[7,0],[0,7],[5,7],[2,0]]
 class Jammer(SidePiece):
     def __init__(self, sched, synth, channel, program, key, ornament=Ornament1, vel = 50):
         self.sched = sched
