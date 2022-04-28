@@ -172,3 +172,4 @@ class Player(object):
         for i in self.static_objects:
             i.on_zoom(scaling_factor,origin)
         self.last_tonnetz_seg = cur_seq
+

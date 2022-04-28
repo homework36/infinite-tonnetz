@@ -42,6 +42,7 @@ class AudioController(object):
         self.synth_bg = SynthEffect(effect=Reverb(room_size=0.7, wet_level=0.7))
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.7))
         self.synth2 = Synth()
+
         self.synth3 = SynthEffect(effect=Reverb(room_size=0.3, wet_level=0.3))
 
         # create TempoMap, AudioScheduler
@@ -110,10 +111,12 @@ class AudioController(object):
         self.drums.append(self.drum2)
         self.drums.append(self.drum3)
         self.drums.append(self.drum4)
+
         
         self.highline_chan = 6
         self.highline_synth = self.synth3
         self.highline = Jammer(self.sched, self.highline_synth, self.highline_chan, (0,98), (self.pitch,self.mode),vel=45)
+
 
         self.climax_synth = self.synth
         self.climax_chan = 0
@@ -161,8 +164,10 @@ class AudioController(object):
         self.chord_audio_svth.set_triad(self.seventh)
         self.sidepiece.set_key((self.pitch,self.mode))
         self.highline.set_key((self.pitch,self.mode))
+
         self.climax.set_key((self.pitch,self.mode))
         self.soundeffect.set_pitches(self.triad[:2]-24)    
+
 
         self.soundeffect.start()
         # play chord in the background
@@ -176,7 +181,9 @@ class AudioController(object):
         # update notes in other things
         self.make_notes()
         self.arpeg.set_pitches(self.flashynotes)
+
         self.melody.set_key((self.pitch,self.mode))
+
         self.chromscale.set_pitches(self.chromnotes)
         
        
@@ -204,6 +211,7 @@ class AudioController(object):
     def stop_highline(self):
         if self.highline.playing:
             self.highline.stop()
+
 
 
     def play_astronaut(self, lan=1):
@@ -590,8 +598,10 @@ class ChromScaleSeq(NoteSequencer):
 
         # post the first note on the next quarter-note:
         now = self.sched.get_tick()
+
         # next_beat = quantize_tick_up(now, int(kTicksPerQuarter/4))
         self.on_cmd = self.sched.post_at_tick(self._note_on, now)
+
 
     def _note_on(self, tick):
         # if looping, go back to beginning
@@ -647,7 +657,9 @@ class SidePiece(object):
         self.secondary = (np.array([0, 4, -1, 3, -2, 2, 5, 0]) + self.pitch)%12+48
         self.secondary_chord = [[0,0,1,1, 1,2,1,0 ],[1,1,0,0, 0,0,1,1]][self.mode]
         self.secondary_ind = 0
+
         self.scales = [[100,0, 2, 3, 5, 7, 8, 10, 12],[100,0, 2, 4, 5, 7, 9, 11, 12]]
+
         self.scales_basenotes = [[0,3,7,10],[0,4,7,11],[0,3,6,12]]
         self.ornament = [[-1,0],[2,-1,0],[2,0],[0]]
         self.cur_base = None
@@ -778,11 +790,13 @@ class SidePiece(object):
 
 
 RhythmBank = [
+
 [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
 [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
 [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
 [0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1]
 ]
+
 
 class Drum(NoteSequencer):
     def __init__(self, sched, synth, notes, channel, program, vel=30, rhythm=0, note=0):
@@ -822,10 +836,12 @@ class Drum(NoteSequencer):
     def change_rhythm(self,rhythm):
         self.rhythm = np.array(RhythmBank[rhythm])
 
+
 Ornament1 = [[7,0,7],[0,7,0],[5,7],[7,5],[7,7],[0,0]]
 Ornament2 = [[100,7],[100,0],[7,0],[0,7],[5,7],[2,0]]
 class Jammer(SidePiece):
     def __init__(self, sched, synth, channel, program, key, ornament=Ornament1, vel = 50):
+
         self.sched = sched
         self.synth = synth
         self.channel = channel
@@ -841,10 +857,12 @@ class Jammer(SidePiece):
         # self.synth.cc(self.channel,91,40)
         
         self.idx_top = 0
+
         self.ornament = ornament
         self.cur_base = None
         self.cur_mode = None
         self.length = 960
+
         self.notes_bass = []
         self.loop_max = 4
         self.make_notes()
@@ -878,6 +896,7 @@ class Jammer(SidePiece):
     def set_key(self, new_key):
         self.pitch, self.mode = new_key
         self.pitch = self.pitch % 12 + 60
+
         self.make_notes(change_chord=False)
 
     def set_length(self, length):
@@ -945,3 +964,4 @@ class Jammer2(SidePiece):
                 while temp_note < 60:
                     temp_note += 12
                 self.notes_top[i] = temp_note
+

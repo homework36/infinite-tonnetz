@@ -200,4 +200,5 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 3, 'Need arguments ip and port'
     assert sys.argv[2].isdigit() and int(
         sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
+
     run(MainWidget(sys.argv[1], sys.argv[2]))
