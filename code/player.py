@@ -120,7 +120,7 @@ class Player(object):
                 
 
             elif type == 'planet':  # play seventh note
-                if dist <= self.last_tonnetz_seg:
+                if dist <= self.last_tonnetz_seg/2:
                     self.near_planet += 1
                     self.audio_ctrl.play_seventh()
                     i.on_update(0, start_anim=True)

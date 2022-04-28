@@ -13,7 +13,7 @@ import numpy as np
 
 inner_boundary_factor = 0.2
 outer_boudnary_factor = 1.
-rescale_const = Window.width / 3
+rescale_const = Window.width / 4
 
 
 class SpaceObject(InstructionGroup):

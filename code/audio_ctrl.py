@@ -146,11 +146,14 @@ class AudioController(object):
 
 
     def make_prl(self, trans):
+        print('key before',self.key)
         print('made trans',trans)
         # make prl transformation, record new data
         mode, triad, key = make_trans(self.mode,self.triad,self.pitch,trans=trans)
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
+        print('key after',self.key)
+        print()
         self.seventh = np.array([[10,11][self.mode]]) + self.pitch
 
         # set new chord
@@ -161,7 +164,7 @@ class AudioController(object):
         self.climax.set_key((self.pitch,self.mode))
         self.soundeffect.set_pitches(self.triad[:2]-24)    
 
-        # self.soundeffect.start()
+        self.soundeffect.start()
         # play chord in the background
         if self.backround_sound:
             self.chord_audio.start()

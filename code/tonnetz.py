@@ -47,7 +47,7 @@ class StarLine(InstructionGroup):
         self.range = range
         self.last_cross_pt = None
         self.color = Color(1, 1, 1)
-        self.color.a = 0.5
+        self.color.a = 0.3
         self.add(self.color)
         self.color_change_elapse = 0
         self.add(self.line)
@@ -132,10 +132,10 @@ class StarLine(InstructionGroup):
                     return False
                 self.last_cross_pt = temp
                 self.change_color()
-                # print()
-                # print(self.type,'crossing',self.cx,self.cy)
+                print(self.type,'crossing',self.cx,self.cy)
                 return True
             else:
+                # print(self.type,'not crossing',self.cx,self.cy)
                 self.last_cross_pt = None
                 self.change_color(default=False)
                 return False
