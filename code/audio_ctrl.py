@@ -43,7 +43,7 @@ class AudioController(object):
         self.synth = SynthEffect(effect=Reverb(room_size=0.5, wet_level=0.7))
         self.synth2 = Synth()
 
-        self.synth3 = SynthEffect(effect=Reverb(room_size=0.3, wet_level=0.3))
+        self.synth3 = Synth()
 
         # create TempoMap, AudioScheduler
         self.tempo_map  = SimpleTempoMap(72)
@@ -103,10 +103,10 @@ class AudioController(object):
 
         self.drum_chan = 9
         self.drum_synth = self.synth3
-        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (128,9), rhythm=0, vel = 45) 
-        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (8,116),rhythm=1, vel = 60)
-        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,118), rhythm=2, vel = 60)
-        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 80) 
+        self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (0,118), rhythm=0, vel = 40) 
+        self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-1, (0,117),rhythm=1, vel = 40)
+        self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (8,117), rhythm=2, vel = 30)
+        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,115), rhythm=3, vel = 30,note=2) 
         self.drums = []
         self.drums.append(self.drum1)
         self.drums.append(self.drum2)
@@ -194,12 +194,14 @@ class AudioController(object):
         
     def play_bg_drum(self,idx=[]):
         for i in idx:
+            print('drum',i,'played')
             drum = self.drums[i]
             if not drum.playing:
                 drum.start()
 
     def stop_bg_drum(self,idx=[]):
         for i in idx:
+            print('drum',i,'stoped')
             drum = self.drums[i]
             if drum.playing:
                 drum.stop()
@@ -348,6 +350,7 @@ class chord_audio(object):
         
 
     def start(self):
+        print('chord audio played')
         self.synth.cc(self.channel,64,65)
         if self.playing:
             return
@@ -794,7 +797,7 @@ RhythmBank = [
 
 [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
 [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
-[0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+[0,0,1,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
 [0,0,0,0, 1,0,1,0, 0,0,0,0, 0,1,1,1]
 ]
 

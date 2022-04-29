@@ -309,6 +309,14 @@ class MainWidget(BaseWidget):
             # self.tonnetz.modify_seq_length(-10.)
             self.player.zoom(_in=False)
 
+        # click 'a' to go back to main screen
+        if keycode[1] == 'a':
+            if self.start_screen not in self.children:
+                with self.canvas.before:
+                    self.add_widget(self.start_screen, 0)
+                    self.reader = None
+                self.player.sound_anim_effect_switch_off = True
+
         # following commands are for debugging
         # may have conflicts with player
         if keycode[1] == 'p':
@@ -352,13 +360,15 @@ class MainWidget(BaseWidget):
         if keycode[1] == ']':
             self.audio_ctrl.stop_highline()
 
-        # click 'a' to go back to main screen
-        if keycode[1] == 'a':
-            if self.start_screen not in self.children:
-                with self.canvas.before:
-                    self.add_widget(self.start_screen, 0)
-                    self.reader = None
-                self.player.sound_anim_effect_switch_off = True
+        
+        
+        if keycode[1] in ['1','2','3','4']:
+            self.audio_ctrl.play_bg_drum(idx=[int(keycode[1])-1])
+
+    # def on_key_up(self, keycode):
+
+    #     if keycode[1] in ['1','2','3','4']:
+    #         self.audio_ctrl.stop_bg_drum(idx=[int(keycode[1])-1])
 
 if __name__ == "__main__":
     if platform == 'darwin': # macOS
