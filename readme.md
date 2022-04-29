@@ -29,7 +29,9 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
 
 ##### Step 2: Connect with your smartphone (full description [here](https://heliotrope-script-d84.notion.site/Send-OSC-from-phone-to-PC-55ec4f7e780e49d68cd78e8dade89ea5))
 
-*** *IMPORTANT: Make sure your phone and laptop/PC are connected to the same wireless network or hotspot***
+*** IMPORTANT: Make sure your phone and laptop/PC are connected to the same wireless network or hotspot***
+
+Prerequisite: Find your IP on computer (MacOS user can first go to Step 3 and use the ip shown in the program)
 
 1. Download and set up [ZIG SIM](https://1-10.github.io/zigsim/) on your phone
 
@@ -64,7 +66,7 @@ From the ```infinite-tonnetz\code``` directory, run the following command:
 - Mac users:
 
 ```bash
-python main.py <IP address in step 2.3c> <Port number in step 2.3d> 
+python main.py
 ```
 
 - Windows users:

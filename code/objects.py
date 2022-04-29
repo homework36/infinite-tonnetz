@@ -226,7 +226,7 @@ class SpaceObject(InstructionGroup):
 
 
 class PhysBubble(InstructionGroup):
-    def __init__(self, pos, r, color=(1, 1, 1), callback=None, in_boundary=None):
+    def __init__(self, pos, r, color=(1, 1, 1), callback=None, checkline_callback=None):
         super(PhysBubble, self).__init__()
 
         self.width, self.height = Window.width, Window.height
@@ -250,7 +250,7 @@ class PhysBubble(InstructionGroup):
 
         self.circle.texture = Image(source='../img/icon.png').texture
         self.callback = callback
-        self.in_boundary_callback = in_boundary
+        self.checkline_callback = checkline_callback
         self.last_angle = 0
 
         self.touch_boundary_x = False
@@ -288,42 +288,41 @@ class PhysBubble(InstructionGroup):
         right_width = self.width * (1-inner_boundary_factor)
         bottom_height = self.height * inner_boundary_factor
         top_height = self.height * (1-inner_boundary_factor)
+
+        # checking lines
+        if self.dx != 0 or self.dy != 0:
+            self.checkline_callback(self.last_pos,dx=self.dx,dy=self.dy)
+
         # x within boundary
         if self.radius + left_width <= self.pos_x + self.dx <= right_width - self.radius:
             self.pos_x += self.dx
-            self.in_boundary_callback(True)
             self.touch_boundary_x = False
 
         # x left
         elif self.radius + left_width > self.pos_x + self.dx:
             self.pos_x = self.radius + left_width
             self.callback(-self.dx, None)
-            self.in_boundary_callback(False)
             self.touch_boundary_x = True
 
         # x right
         else:  # self.pos_x + self.dx > Window.width - self.radius
             self.pos_x = right_width - self.radius
             self.callback(-self.dx, None)
-            self.in_boundary_callback(False)
             self.touch_boundary_x = True
 
         # y within boundary
         if self.radius + bottom_height <= self.pos_y + self.dy <= top_height - self.radius:
             self.pos_y += self.dy
-            self.in_boundary_callback(True)
             self.touch_boundary_y = False
 
         elif self.radius + bottom_height > self.pos_y + self.dy:
             self.pos_y = self.radius + bottom_height
             self.callback(None, -self.dy)
-            self.in_boundary_callback(False)
             self.touch_boundary_y = True
 
         else:  # self.pos_y + self.dy > Window.height - self.radius
             self.pos_y = top_height - self.radius
             self.callback(None, -self.dy)
-            self.in_boundary_callback(False)
             self.touch_boundary_y = True
 
         self.circle.cpos = np.array([self.pos_x, self.pos_y], dtype=float)
