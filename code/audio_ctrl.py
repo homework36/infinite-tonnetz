@@ -99,13 +99,14 @@ class AudioController(object):
         self.soundeffect_synth = self.synth
         self.soundeffect = ChromScaleSeq(self.sched, self.soundeffect_synth, self.soundeffect_chan,  (8,116), self.triad[:2]-24,  vel=80, loop=False)  
         self.soundeffect.length = 160
+        self.soundeffect_switch = False
 
         self.drum_chan = 9
         self.drum_synth = self.synth3
         self.drum1 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan, (128,9), rhythm=0, vel = 45) 
         self.drum2 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (8,116),rhythm=1, vel = 60)
         self.drum3 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-2, (0,118), rhythm=2, vel = 60)
-        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 60) 
+        self.drum4 = Drum(self.sched, self.drum_synth, self.triad, self.drum_chan-3, (0,116), rhythm=3, vel = 80) 
         self.drums = []
         self.drums.append(self.drum1)
         self.drums.append(self.drum2)
@@ -168,8 +169,8 @@ class AudioController(object):
         self.climax.set_key((self.pitch,self.mode))
         self.soundeffect.set_pitches(self.triad[:2]-24)    
 
-
-        self.soundeffect.start()
+        if self.soundeffect_switch:
+            self.soundeffect.start()
         # play chord in the background
         if self.backround_sound:
             self.chord_audio.start()
