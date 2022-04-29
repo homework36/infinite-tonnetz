@@ -180,7 +180,15 @@ class MainWidget(BaseWidget):
                 return ''
             return output.decode('utf-8')
 
-        else: # TODO: handle Windows
+        elif platform == 'Windows': # Windows
+            command =  "for /f \"tokens=2 delims=[]\" %a in ('ping -n 1 -4 \"%computername%\"') do @echo %a"
+            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+            if error:
+                return ''
+            return output.decode('utf-8')
+
+        else: # other OS 
             return ''
 
     def start_game(self, ip_val, port_val):
