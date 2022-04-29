@@ -132,7 +132,7 @@ class StartScreen(RelativeLayout):
 
 # mainwidget
 class MainWidget(BaseWidget):
-    def __init__(self, ip, port):
+    def __init__(self):
         super(MainWidget, self).__init__()
         Window.clearcolor = (0.062, 0.023, 0.219, 0.6)
 
@@ -351,9 +351,4 @@ class MainWidget(BaseWidget):
                     self.reader = None
 
 if __name__ == "__main__":
-    # pass in which MainWidget to run as a command-line arg
-    assert len(sys.argv) >= 3, 'Need arguments ip and port'
-    assert sys.argv[2].isdigit() and int(
-        sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
-
-    run(MainWidget(sys.argv[1], sys.argv[2]))
+    run(MainWidget())
