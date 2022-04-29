@@ -149,7 +149,7 @@ class MainWidget(BaseWidget):
                                    r=Window.width/25,
                                    color=(1, 1, 1),
                                    callback=self.tonnetz.on_boundary,
-                                   in_boundary=self.tonnetz.check_lines)
+                                   checkline_callback=self.tonnetz.check_lines)
         # self.tonnetz.import_obj(self.starship)
 
         # AnimGroup handles drawing, animation, and object lifetime management

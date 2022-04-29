@@ -194,14 +194,14 @@ class AudioController(object):
         
     def play_bg_drum(self,idx=[]):
         for i in idx:
-            print('drum',i,'played')
+            # print('drum',i,'played')
             drum = self.drums[i]
             if not drum.playing:
                 drum.start()
 
     def stop_bg_drum(self,idx=[]):
         for i in idx:
-            print('drum',i,'stoped')
+            # print('drum',i,'stoped')
             drum = self.drums[i]
             if drum.playing:
                 drum.stop()

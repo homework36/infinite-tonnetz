@@ -152,7 +152,7 @@ class StarLine(InstructionGroup):
 
 # create tonnetz
 class Tonnetz(InstructionGroup):
-    def __init__(self, seg_length, origin=[10,10], callback=None, obj=None):
+    def __init__(self, seg_length, origin=[10,10], callback=None):
         '''create full tonnetz with a given seg_length and origin'''
         super(Tonnetz, self).__init__()
         self.width, self.height = Window.width, Window.height
@@ -168,11 +168,10 @@ class Tonnetz(InstructionGroup):
         self.make_lines()
         self.last_origin = self.origin.copy()
         self.callback = callback
-        self.obj = obj
-        self.in_boundary = False
+        self.count_p = 0
+        self.count_r = 0
+        self.count_l = 0
 
-    def import_obj(self,obj):
-        self.obj = obj
 
     def make_lines(self, p=True, rl=True):
         # print('make lines',self.origin)
@@ -250,59 +249,66 @@ class Tonnetz(InstructionGroup):
         self.make_lines()
 
     def on_boundary(self, dx, dy):
-        x_adj = 0
-        y_adj = 0
         if dx or dy:
             self.last_origin = self.origin.copy()
 
         if dx:
-            x_adj = dx
             self.origin[0] += dx
-            self.origin[0] %= np.ceil(Window.width/self.seg/2)*self.seg*2 
-            
+            self.origin[0] %= self.seg * 2
+            # self.num_l_p = int((self.width-self.origin[0])/self.seg)
+            # self.num_l_m = ceil((self.width+self.height/sq3/self.seg)/self.seg) - self.num_l_p
+            # self.num_r_p = int((self.width+self.height/sq3/self.seg-self.origin[0])/self.seg)
+            # self.num_r_m = ceil((self.width+self.height/sq3/self.seg)/self.seg) - self.num_r_p
+
+        
         if dy:
-            y_adj = dy
             self.origin[1] += dy
-            self.origin[1] %= np.ceil(Window.height/self.seg_height/2)*self.seg_height*2 
+            self.origin[1] %= self.seg_height * 2
+            # self.num_p_p = int((self.height-self.origin[1])/self.seg_height)
+            # self.num_p_m = ceil(self.height/self.seg_height) - self.num_p_p
 
         if dx or dy:
-            # print()
-            # print('boundary moving')
-            # print('adj',x_adj, y_adj)
-            self.check_lines(dx=-x_adj,dy=-y_adj)
             self.update_lines(self.origin-self.last_origin)
-            # print('end of boundary checking\n')
         
     def update_lines(self, diff_origin):
         for line in self.line_list:
             line.update_line(diff_origin[0],diff_origin[1])
 
     def on_update(self):
-        # print()
-        # print('totle lines',len(self.line_list))
-        # for line in self.line_list:
-            # print('line',line.type,line.cx,line.cy)
-        if self.in_boundary:
-            self.check_lines()
-        else:
-            return
+        pass
 
-    def check_lines(self,dx=0,dy=0):
-        if self.obj is not None and self.callback is not None:
-            last_pos = self.obj.get_last_pos()
-            cur_pos = self.obj.get_curr_pos()
-            adjust_pos = [cur_pos[0]+dx,cur_pos[1]+dy]
-            for line in self.line_list_p:
-                if line.check_cross(adjust_pos, last_pos, True):
-                    self.callback('p')
-    
-            for line in self.line_list_r:
-                if line.check_cross(adjust_pos, last_pos, True):
-                    self.callback('r')
-
-            for line in self.line_list_l:
-                if line.check_cross(adjust_pos, last_pos, True):
-                    self.callback('l')
+    def check_lines(self,last_pos,dx=0,dy=0):
+        local_count = 0
+        cur_pos = [last_pos[0]+dx,last_pos[1]+dy]
+        for line in self.line_list_p:
+            if line.check_cross(cur_pos, last_pos):
+                self.count_p += 1
+                local_count += 1
+                # print('total p trans',self.count_p)
+                # print('local p trans',local_count)
+                # for lin1 in self.line_list_p:
+                #     print('line p at',lin1.cx,lin1.cy)
+                self.callback('p')
+        
+        local_count = 0
+        for line in self.line_list_r:
+            if line.check_cross(cur_pos, last_pos):
+                self.count_r += 1
+                local_count += 1
+                # print('total r trans',self.count_r)
+                # print('local r trans',local_count)
+                # for lin1 in self.line_list_r:
+                #     print('line r at',lin1.cx,lin1.cy)
+                self.callback('r')
+        
+        local_count = 0
+        for line in self.line_list_l:
+            if line.check_cross(cur_pos, last_pos):
+                self.count_l += 1
+                local_count += 1
+                # print('total l trans',self.count_l)
+                # print('local l trans',local_count)
+                self.callback('l')
     
     def modify_seq_length(self,val):
         temp_seg = self.seg + val
