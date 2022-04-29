@@ -214,7 +214,7 @@ class MainWidget(BaseWidget):
             self.space_objects.append(SpaceObject(np.random.randint(
                 30, 60), '../img/planet'+str(np.random.choice(range(1,5)))+'.png', 'planet'))
 
-        for _ in range(20):  # create stars
+        for _ in range(10):  # create stars
             self.space_objects.append(SpaceObject(
                 np.random.randint(10, 20), '../img/star.png', 'star'))
 
@@ -233,7 +233,7 @@ class MainWidget(BaseWidget):
 
         # create static stars
         self.static_objects = []
-        for _ in range(60):  # create round stars
+        for _ in range(100):  # create round stars
             self.static_objects.append(SpaceObject(
                 np.random.randint(4, 8), '../img/star2.png', 'star2'))
 
@@ -252,7 +252,7 @@ class MainWidget(BaseWidget):
         else:
             self.starship.set_accel(0,0)
 
-        self.tonnetz.on_update()
+        # self.tonnetz.on_update()
         
         self.audio_ctrl.on_update()
         self.objects.on_update()  # anim group

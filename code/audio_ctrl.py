@@ -350,7 +350,6 @@ class chord_audio(object):
         
 
     def start(self):
-        print('chord audio played')
         self.synth.cc(self.channel,64,65)
         if self.playing:
             return
