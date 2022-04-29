@@ -216,8 +216,8 @@ class Tonnetz(InstructionGroup):
         self.p_num = len(self.line_list_p)
 
     def calc_p_num_points(self):
-        self.num_p_p = ceil((self.height)/self.seg_height) + 3
-        self.num_p_m = ceil(self.height/self.seg_height) + 3
+        self.num_p_p = ceil((self.height)/self.seg_height) + 4
+        self.num_p_m = ceil(self.height/self.seg_height) + 4
         
 
     def calc_rl_num_points(self):
@@ -293,6 +293,7 @@ class Tonnetz(InstructionGroup):
                 self.push_l(right=True)
                 self.push_r(right=True)
                 self.push_r(right=True)
+
             elif self.origin[0] < 0:
                 self.origin[0] += self.seg * 2
                 self.push_l(right=False)
@@ -309,11 +310,15 @@ class Tonnetz(InstructionGroup):
                 self.origin[1] -= self.seg_height * 2
                 self.push_p(up=True)
                 self.push_p(up=True)
+                self.push_l(right=False)
+                self.push_r(right=True)
      
             elif self.origin[1] < 0:
                 self.origin[1] += self.seg_height * 2
                 self.push_p(up=False)
                 self.push_p(up=False)
+                self.push_l(right=True)
+                self.push_r(right=False)
 
       
         if dx or dy:
