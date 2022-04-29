@@ -132,7 +132,7 @@ class StartScreen(RelativeLayout):
 
 # mainwidget
 class MainWidget(BaseWidget):
-    def __init__(self):
+    def __init__(self, ip=None):
         super(MainWidget, self).__init__()
         Window.clearcolor = (0.062, 0.023, 0.219, 0.6)
 
@@ -149,7 +149,7 @@ class MainWidget(BaseWidget):
                                    r=Window.width/25,
                                    color=(1, 1, 1),
                                    callback=self.tonnetz.on_boundary,
-                                   in_boundary=self.tonnetz.check_lines)
+                                   checkline_callback=self.tonnetz.check_lines)
         # self.tonnetz.import_obj(self.starship)
 
         # AnimGroup handles drawing, animation, and object lifetime management
@@ -162,7 +162,7 @@ class MainWidget(BaseWidget):
                              self.audio_ctrl, self.space_objects, self.static_objects)
 
 
-        self.ip_address = self.get_ip()
+        self.ip_address = self.get_ip(ip)
         self.start_screen = StartScreen(self.start_game, 
                                         self.ip_address,
                                         self.objects.children, 
@@ -171,7 +171,7 @@ class MainWidget(BaseWidget):
         with self.canvas.before:
             self.add_widget(self.start_screen, 0)
         
-    def get_ip(self):
+    def get_ip(self, ip_arg=''):
         if platform == 'darwin': # macOS
             command = 'ipconfig getifaddr en0'
             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
@@ -189,7 +189,7 @@ class MainWidget(BaseWidget):
             return output.decode('utf-8')
 
         else: # other OS 
-            return ''
+            return ip_arg
 
     def start_game(self, ip_val, port_val):
         self.remove_widget(self.start_screen)
@@ -200,6 +200,7 @@ class MainWidget(BaseWidget):
         self.curr_touch = {} # self.reader.get_pos()['touch']
         self.last_touch = {}
         self.touch_diff_x, self.touch_diff_y = 0, 0
+        self.player.sound_anim_effect_switch_off = False
 
         
     def add_space_objects(self):
@@ -308,6 +309,14 @@ class MainWidget(BaseWidget):
             # self.tonnetz.modify_seq_length(-10.)
             self.player.zoom(_in=False)
 
+        # click 'a' to go back to main screen
+        if keycode[1] == 'a':
+            if self.start_screen not in self.children:
+                with self.canvas.before:
+                    self.add_widget(self.start_screen, 0)
+                    self.reader = None
+                self.player.sound_anim_effect_switch_off = True
+
         # following commands are for debugging
         # may have conflicts with player
         if keycode[1] == 'p':
@@ -351,12 +360,22 @@ class MainWidget(BaseWidget):
         if keycode[1] == ']':
             self.audio_ctrl.stop_highline()
 
-        # click 'a' to go back to main screen
-        if keycode[1] == 'a':
-            if self.start_screen not in self.children:
-                with self.canvas.before:
-                    self.add_widget(self.start_screen, 0)
-                    self.reader = None
+        
+        
+        if keycode[1] in ['1','2','3','4']:
+            self.audio_ctrl.play_bg_drum(idx=[int(keycode[1])-1])
+
+    # def on_key_up(self, keycode):
+
+    #     if keycode[1] in ['1','2','3','4']:
+    #         self.audio_ctrl.stop_bg_drum(idx=[int(keycode[1])-1])
 
 if __name__ == "__main__":
-    run(MainWidget())
+    if platform == 'darwin': # macOS
+        run(MainWidget())
+    else: # platform == 'Windows': # Windows
+        assert len(sys.argv) >= 2, 'Need arguments ip and port'
+        # assert sys.argv[2].isdigit() and int(
+        #     sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
+
+        run(MainWidget(sys.argv[1]))
