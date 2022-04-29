@@ -54,7 +54,7 @@ class Player(object):
         dx = np.abs(self.main_obj.dx)
         dy = np.abs(self.main_obj.dy)
         maxvel = max(dx,dy)
-        vel = int(np.interp(maxvel, (0, 10), (20,100)))
+        vel = int(np.interp(maxvel, (0, 10), (30,100)))
         self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth_bg,1, vel)
         # print('current spd',dx,dy)
@@ -62,29 +62,34 @@ class Player(object):
             self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(120)
+            self.audio_ctrl.soundeffect_switch = True
             return
         elif dx >= 1.5 or dy >= 1.5:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2])
             self.audio_ctrl.stop_bg_drum(idx=[3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(160)
+            self.audio_ctrl.soundeffect_switch = True
             return
         elif dx >= 0.7 or dy >= 0.7:
             self.audio_ctrl.play_bg_drum(idx=[0,1])
             self.audio_ctrl.stop_bg_drum(idx=[2,3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(240)
+            self.audio_ctrl.soundeffect_switch = True
             return
         elif dx >= 0.2 or dy >= 0.2:
             self.audio_ctrl.play_bg_drum(idx=[0])
             self.audio_ctrl.stop_bg_drum(idx=[1,2,3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(480)
+            self.audio_ctrl.soundeffect_switch = False
             return
         else:
             self.audio_ctrl.stop_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.stop_modescale()
             self.audio_ctrl.highline.set_length(960)
+            self.audio_ctrl.soundeffect_switch = False
             return
 
     def sound_anim_effect(self):
