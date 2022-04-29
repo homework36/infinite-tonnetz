@@ -132,7 +132,7 @@ class StartScreen(RelativeLayout):
 
 # mainwidget
 class MainWidget(BaseWidget):
-    def __init__(self):
+    def __init__(self, ip=None):
         super(MainWidget, self).__init__()
         Window.clearcolor = (0.062, 0.023, 0.219, 0.6)
 
@@ -162,7 +162,7 @@ class MainWidget(BaseWidget):
                              self.audio_ctrl, self.space_objects, self.static_objects)
 
 
-        self.ip_address = self.get_ip()
+        self.ip_address = self.get_ip(ip)
         self.start_screen = StartScreen(self.start_game, 
                                         self.ip_address,
                                         self.objects.children, 
@@ -171,7 +171,7 @@ class MainWidget(BaseWidget):
         with self.canvas.before:
             self.add_widget(self.start_screen, 0)
         
-    def get_ip(self):
+    def get_ip(self, ip_arg=''):
         if platform == 'darwin': # macOS
             command = 'ipconfig getifaddr en0'
             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
@@ -189,7 +189,7 @@ class MainWidget(BaseWidget):
             return output.decode('utf-8')
 
         else: # other OS 
-            return ''
+            return ip_arg
 
     def start_game(self, ip_val, port_val):
         self.remove_widget(self.start_screen)
@@ -359,4 +359,11 @@ class MainWidget(BaseWidget):
                     self.reader = None
 
 if __name__ == "__main__":
-    run(MainWidget())
+    if platform == 'darwin': # macOS
+        run(MainWidget())
+    else: # platform == 'Windows': # Windows
+        assert len(sys.argv) >= 2, 'Need arguments ip and port'
+        # assert sys.argv[2].isdigit() and int(
+        #     sys.argv[2]) >= 1024, 'port needs to be a number greater than or equal to 1024'
+
+        run(MainWidget(sys.argv[1]))

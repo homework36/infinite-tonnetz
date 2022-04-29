@@ -64,7 +64,7 @@ From the ```infinite-tonnetz\code``` directory, run the following command:
 - Mac users:
 
 ```bash
-python main.py <IP address in step 2.3c> <Port number in step 2.3d> 
+python main.py
 ```
 
 - Windows users:
