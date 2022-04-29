@@ -95,6 +95,7 @@ class Player(object):
             return
 
     def sound_anim_effect(self):
+        self.sound_anim_effect_switch_off = True
         if self.sound_anim_effect_switch_off:
             return 
 
