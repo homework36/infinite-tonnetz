@@ -200,6 +200,7 @@ class MainWidget(BaseWidget):
         self.curr_touch = {} # self.reader.get_pos()['touch']
         self.last_touch = {}
         self.touch_diff_x, self.touch_diff_y = 0, 0
+        self.player.sound_anim_effect_switch_off = False
 
         
     def add_space_objects(self):
@@ -357,6 +358,7 @@ class MainWidget(BaseWidget):
                 with self.canvas.before:
                     self.add_widget(self.start_screen, 0)
                     self.reader = None
+                self.player.sound_anim_effect_switch_off = True
 
 if __name__ == "__main__":
     if platform == 'darwin': # macOS

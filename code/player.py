@@ -13,8 +13,10 @@ class Player(object):
         self.static_objects = static_objects
         self.near_planet = 0
         self.last_tonnetz_seg = self.tonnetz.seg
+        self.sound_anim_effect_switch_off = True
         self.on_update()
         self.audio_ctrl.play_highline()
+        
 
         
 
@@ -93,6 +95,9 @@ class Player(object):
             return
 
     def sound_anim_effect(self):
+        if self.sound_anim_effect_switch_off:
+            return 
+
         main_x, main_y = self.main_obj.get_curr_pos()
         main_size = self.main_obj.radius
         self.near_planet = 0
@@ -103,7 +108,6 @@ class Player(object):
             type = i.type
             dist = np.sqrt((main_x - obj_x)**2 + (main_y - obj_y)**2)
             touch_dist = (main_size + obj_size)
-            astronaut_dist = touch_dist * 3
 
             if type == 'star':
                 if dist < touch_dist:
