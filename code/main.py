@@ -149,7 +149,7 @@ class MainWidget(BaseWidget):
                                    r=Window.width/25,
                                    color=(1, 1, 1),
                                    callback=self.tonnetz.on_boundary,
-                                   in_boundary=self.tonnetz.check_lines)
+                                   checkline_callback=self.tonnetz.check_lines)
         # self.tonnetz.import_obj(self.starship)
 
         # AnimGroup handles drawing, animation, and object lifetime management
@@ -200,6 +200,7 @@ class MainWidget(BaseWidget):
         self.curr_touch = {} # self.reader.get_pos()['touch']
         self.last_touch = {}
         self.touch_diff_x, self.touch_diff_y = 0, 0
+        self.player.sound_anim_effect_switch_off = False
 
         
     def add_space_objects(self):
@@ -309,6 +310,14 @@ class MainWidget(BaseWidget):
             # self.tonnetz.modify_seq_length(-10.)
             self.player.zoom(_in=False)
 
+        # click 'a' to go back to main screen
+        if keycode[1] == 'a':
+            if self.start_screen not in self.children:
+                with self.canvas.before:
+                    self.add_widget(self.start_screen, 0)
+                    self.reader = None
+                self.player.sound_anim_effect_switch_off = True
+
         # following commands are for debugging
         # may have conflicts with player
         if keycode[1] == 'p':
@@ -352,12 +361,15 @@ class MainWidget(BaseWidget):
         if keycode[1] == ']':
             self.audio_ctrl.stop_highline()
 
-        # click 'a' to go back to main screen
-        if keycode[1] == 'a':
-            if self.start_screen not in self.children:
-                with self.canvas.before:
-                    self.add_widget(self.start_screen, 0)
-                    self.reader = None
+        
+        
+        if keycode[1] in ['1','2','3','4']:
+            self.audio_ctrl.play_bg_drum(idx=[int(keycode[1])-1])
+
+    # def on_key_up(self, keycode):
+
+    #     if keycode[1] in ['1','2','3','4']:
+    #         self.audio_ctrl.stop_bg_drum(idx=[int(keycode[1])-1])
 
 if __name__ == "__main__":
     if platform == 'darwin': # macOS
