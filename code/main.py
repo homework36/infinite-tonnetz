@@ -252,7 +252,7 @@ class MainWidget(BaseWidget):
         else:
             self.starship.set_accel(0,0)
 
-        # self.tonnetz.on_update()
+        self.tonnetz.on_update()
         
         self.audio_ctrl.on_update()
         self.objects.on_update()  # anim group
