@@ -1,32 +1,11 @@
-from math import radians, ceil
-from struct import calcsize
+from math import ceil
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
-from imslib.core import BaseWidget, run, lookup
-from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
-
 from kivy.core.window import Window
-from kivy.clock import Clock as kivyClock
-from kivy.uix.label import Label
 from kivy.graphics.instructions import InstructionGroup
-from kivy.graphics import Color, Ellipse, Rectangle, Line
-from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
-
-
-from imslib.writer import AudioWriter
-from imslib.audio import Audio
-from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
-from imslib.core import BaseWidget, run
-from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
-from imslib.leap import getLeapInfo, getLeapFrame
-from imslib.synth import Synth
-
-from random import randint, random
+from kivy.graphics import Color, Line
 import numpy as np
-# from pyrsistent import b
-from OSCReader import OSCReader
-from random import randint
 from helper_function import *
 
 
