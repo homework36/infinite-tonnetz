@@ -247,6 +247,7 @@ class MainWidget(BaseWidget):
 
     def on_update(self):
         if self.reader:
+            print('here')
             self.update_pos()
             self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         else:
