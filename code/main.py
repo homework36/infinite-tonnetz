@@ -247,13 +247,12 @@ class MainWidget(BaseWidget):
 
     def on_update(self):
         if self.reader:
-            print('here')
             self.update_pos()
             self.starship.set_accel(self.curr_pos['x'], self.curr_pos['y'])
         else:
             self.starship.set_accel(0,0)
 
-        self.tonnetz.on_update()
+        # self.tonnetz.on_update()
         
         self.audio_ctrl.on_update()
         self.objects.on_update()  # anim group
