@@ -157,7 +157,7 @@ class AudioController(object):
         self.mode,self.triad,self.pitch = mode, triad, key
         self.key = self.keys[(self.pitch-60)%12] + self.modes[self.mode]
         # print('key after',self.key)
-        print()
+        # print()
         self.seventh = np.array([[10,11][self.mode]]) + self.pitch
 
         # set new chord
