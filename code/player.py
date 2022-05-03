@@ -79,7 +79,7 @@ class Player(object):
             self.audio_ctrl.stop_bg_drum(idx=[2,3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(240)
-            self.audio_ctrl.soundeffect_switch = True
+            self.audio_ctrl.soundeffect_switch = False
             return
         elif maxvel >= 0.8:
             self.audio_ctrl.play_bg_drum(idx=[0])
@@ -97,6 +97,11 @@ class Player(object):
 
     def sound_anim_effect(self):
         if self.sound_anim_effect_switch_off:
+            self.audio_ctrl.pause_astronaut()
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.climax.stop()
+            self.audio_ctrl.stop_melody()
+            self.audio_ctrl.stop_jazz()
             return 
 
         main_x, main_y = self.main_obj.get_curr_pos()
