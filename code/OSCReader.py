@@ -43,8 +43,7 @@ class OSCReader:
       data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
       self.sock.settimeout(.01)
     except TimeoutException:
-      # print("Timeout. Please try again.")
       return
     obj = json.loads(data)
-    # print(obj)
+
     return obj['sensordata']

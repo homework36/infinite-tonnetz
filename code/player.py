@@ -60,7 +60,7 @@ class Player(object):
         vel = int(np.interp(maxvel, (0, 10), (30,100)))
         self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth_bg,1, vel)
-        # print('current spd',dx,dy)
+
         if maxvel >= 2.5:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.play_modescale()
