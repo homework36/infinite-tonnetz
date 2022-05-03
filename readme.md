@@ -77,7 +77,7 @@ python main.py <IP address in step 2.3c> -asio
 
 ##### Step 4: Explore
 
-<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\opening_screen.png" style="zoom:55%;" />
+<img src="opening_screen.png" style="zoom:55%;" />
 
 
 
@@ -88,11 +88,11 @@ Spend some time playing with positions of your smartphones and navigate on the s
 
 The lines on the screen correspond to the basic transformations in the Neo-Riemannian Theory, and the entire mapping is essentially a tonnetz. When your plane cross a horizontal line, you change the chord to its parallel major (or minor), as the **P** in the graph below. Similarly, the line tilted to the left represents **R** and exchanges relative major and minor. The one tilted to the right, **L**, means leading tone exchange: In a major triad the root moves down by a semitone (C major to E minor), in a minor triad the fifth moves up by a semitone (E minor to C major).
 
-<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\prl.png" style="zoom:50%;" />
+<img src="prl.png" style="zoom:50%;" />
 
 Especially in the theory analysis for film music, you would jot down the current key area on the tonnetz, connect the path, and find an interesting trace such as the following:
 
-<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\lpl.png" style="zoom:50%;" />
+<img src="lpl.png" style="zoom:50%;" />
 
 Our app does the reverse: you pick a path, and we will output the corresponding harmonic progression for you. Try to experiment going in some directions on purpose. And when you cross the intersection of multiple lines, you can even do more than one transformation at a time.
 
