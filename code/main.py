@@ -6,12 +6,12 @@ from audio_ctrl import AudioController
 from tonnetz import Tonnetz
 from OSCReader import OSCReader
 import numpy as np
-from imslib.gfxutil import topleft_label, resize_topleft_label, Cursor3D, AnimGroup, scale_point, CEllipse
+from imslib.gfxutil import topleft_label, resize_topleft_label, AnimGroup
 from imslib.core import BaseWidget, run
-from kivy.clock import Clock as kivyClock
 from kivy.core.window import Window
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from sys import platform
 import subprocess

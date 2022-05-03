@@ -1,13 +1,11 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 from kivy.uix.image import Image
-from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
-from kivy.graphics import Color, Ellipse, Rectangle, Line
+from kivy.graphics import PushMatrix, PopMatrix, Rotate
+from kivy.graphics import Color
 from kivy.graphics.instructions import InstructionGroup
-from kivy.uix.label import Label
-from kivy.clock import Clock as kivyClock
 from kivy.core.window import Window
-from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
+from imslib.gfxutil import CEllipse, KFAnim, CRectangle
 import numpy as np
 
 

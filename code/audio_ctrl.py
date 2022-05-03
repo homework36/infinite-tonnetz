@@ -1,35 +1,17 @@
-# from math import radians, ceil
-# from struct import calcsize
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
-# from imslib.core import BaseWidget, run, lookup
-# from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, KFAnim, AnimGroup, CRectangle
-
-from kivy.core.window import Window
-from kivy.clock import Clock as kivyClock
-# from kivy.uix.label import Label
-# from kivy.graphics.instructions import InstructionGroup
-# from kivy.graphics import Color, Ellipse, Rectangle, Line
-# from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale, Rotate
-
-
-from imslib.writer import AudioWriter
 from imslib.audio import Audio
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
 from imslib.synth import Synth
 from imslib.mixer import Mixer
 from imslib.wavegen import WaveGenerator
-from imslib.wavesrc import WaveBuffer, WaveFile
+from imslib.wavesrc import WaveFile
 from imslib.noteseq import NoteSequencer
 
-# from random import randint, random
 import numpy as np
-# from pyrsistent import b
 from helper_function import *
-
 from pedalboard import Reverb
-
 
 
 Chromatics = np.array([12-i for i in range(13)]+[-24]) 
@@ -967,4 +949,3 @@ class Jammer2(SidePiece):
                 while temp_note < 60:
                     temp_note += 12
                 self.notes_top[i] = temp_note
-

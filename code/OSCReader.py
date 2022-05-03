@@ -1,4 +1,3 @@
-import argparse
 import socket
 from socket import timeout as TimeoutException
 import json
@@ -29,21 +28,22 @@ Data format:
    }
 '''
 
+
 class OSCReader:
-  def __init__(self, ip, port):
-    # Code adopted from https://wiki.python.org/moin/UdpCommunication
-    assert isinstance(ip, str) and isinstance(port, int), 'Input not valid'
-    self.sock = socket.socket(socket.AF_INET, # Internet
-                         socket.SOCK_DGRAM) # UDP
+    def __init__(self, ip, port):
+        # Code adopted from https://wiki.python.org/moin/UdpCommunication
+        assert isinstance(ip, str) and isinstance(port, int), 'Input not valid'
+        self.sock = socket.socket(socket.AF_INET,  # Internet
+                                  socket.SOCK_DGRAM)  # UDP
 
-    self.sock.bind((ip, port))
+        self.sock.bind((ip, port))
 
-  def get_pos(self):
-    try:
-      data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
-      self.sock.settimeout(.01)
-    except TimeoutException:
-      return
-    obj = json.loads(data)
+    def get_pos(self):
+        try:
+            data, addr = self.sock.recvfrom(1024)  # buffer size is 1024 bytes
+            self.sock.settimeout(.01)
+        except TimeoutException:
+            return
+        obj = json.loads(data)
 
-    return obj['sensordata']
+        return obj['sensordata']
