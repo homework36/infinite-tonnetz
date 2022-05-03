@@ -72,9 +72,28 @@ python main.py
 - Windows users:
 
 ```bash
-python main.py <IP address in step 2.3c> <Port number in step 2.3d> -asio
+python main.py <IP address in step 2.3c> -asio
 ```
 
 ##### Step 4: Explore
 
-There should be window poping out. Spend some time playing with positions of your smartphones and navigate on the space. Try to move in all directions, get closer to or away from objects you see. 
+<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\opening_screen.png" style="zoom:55%;" />
+
+
+
+There should be window popping out. Make sure to check the `IP address` and enter `Port number` on the opening screen to match what you have in step 2.3 and use your mouse to click on `Start Exploration`.
+
+
+Spend some time playing with positions of your smartphones and navigate on the space. Try to move in all directions, get closer to or away from objects you see. 
+
+The lines on the screen correspond to the basic transformations in the Neo-Riemannian Theory, and the entire mapping is essentially a tonnetz. When your plane cross a horizontal line, you change the chord to its parallel major (or minor), as the **P** in the graph below. Similarly, the line tilted to the left represents **R** and exchanges relative major and minor. The one tilted to the right, **L**, means leading tone exchange: In a major triad the root moves down by a semitone (C major to E minor), in a minor triad the fifth moves up by a semitone (E minor to C major).
+
+<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\prl.png" style="zoom:50%;" />
+
+Especially in the theory analysis for film music, you would jot down the current key area on the tonnetz, connect the path, and find an interesting trace such as the following:
+
+<img src="C:\Users\hanwe\Study\HU grad\spring 2022\6.185\infinite-tonnetz\lpl.png" style="zoom:50%;" />
+
+Our app does the reverse: you pick a path, and we will output the corresponding harmonic progression for you. Try to experiment going in some directions on purpose. And when you cross the intersection of multiple lines, you can even do more than one transformation at a time.
+
+*Reference for plots*: https://en.wikipedia.org/wiki/Neo-Riemannian_theory 

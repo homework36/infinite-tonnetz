@@ -1,6 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 import numpy as np
+from kivy.core.window import Window
 
 
 class Player(object):
@@ -59,7 +60,7 @@ class Player(object):
         vel = int(np.interp(maxvel, (0, 10), (30,100)))
         self.audio_ctrl.adjust_volume(
                         self.audio_ctrl.synth_bg,1, vel)
-        # print('current spd',dx,dy)
+
         if maxvel >= 2.5:
             self.audio_ctrl.play_bg_drum(idx=[0,1,2,3])
             self.audio_ctrl.play_modescale()
@@ -78,7 +79,7 @@ class Player(object):
             self.audio_ctrl.stop_bg_drum(idx=[2,3])
             self.audio_ctrl.play_modescale()
             self.audio_ctrl.highline.set_length(240)
-            self.audio_ctrl.soundeffect_switch = True
+            self.audio_ctrl.soundeffect_switch = False
             return
         elif maxvel >= 0.8:
             self.audio_ctrl.play_bg_drum(idx=[0])
@@ -96,6 +97,11 @@ class Player(object):
 
     def sound_anim_effect(self):
         if self.sound_anim_effect_switch_off:
+            self.audio_ctrl.pause_astronaut()
+            self.audio_ctrl.pause_seventh()
+            self.audio_ctrl.climax.stop()
+            self.audio_ctrl.stop_melody()
+            self.audio_ctrl.stop_jazz()
             return 
 
         main_x, main_y = self.main_obj.get_curr_pos()
@@ -170,8 +176,11 @@ class Player(object):
     def zoom(self,_in=True):
         if _in:
             val = 10
+            resize_factor = 1.1
         else:
             val = -10
+            resize_factor = .9
+        
         self.tonnetz.modify_seq_length(val)
         cur_seq = self.tonnetz.seg
         origin = self.main_obj.get_curr_pos()
@@ -181,4 +190,9 @@ class Player(object):
         for i in self.static_objects:
             i.on_zoom(scaling_factor,origin)
         self.last_tonnetz_seg = cur_seq
+
+        for i in self.space_objects:
+            i.on_resize((Window.width*resize_factor, Window.height*resize_factor))
+        for i in self.static_objects:
+            i.on_resize((Window.width*resize_factor, Window.height*resize_factor))  
 
