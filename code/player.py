@@ -1,6 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 import numpy as np
+from kivy.core.window import Window
 
 
 class Player(object):
@@ -170,8 +171,11 @@ class Player(object):
     def zoom(self,_in=True):
         if _in:
             val = 10
+            resize_factor = 1.1
         else:
             val = -10
+            resize_factor = .9
+        
         self.tonnetz.modify_seq_length(val)
         cur_seq = self.tonnetz.seg
         origin = self.main_obj.get_curr_pos()
@@ -181,4 +185,9 @@ class Player(object):
         for i in self.static_objects:
             i.on_zoom(scaling_factor,origin)
         self.last_tonnetz_seg = cur_seq
+
+        for i in self.space_objects:
+            i.on_resize((Window.width*resize_factor, Window.height*resize_factor))
+        for i in self.static_objects:
+            i.on_resize((Window.width*resize_factor, Window.height*resize_factor))  
 

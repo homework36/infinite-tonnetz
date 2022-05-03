@@ -12,10 +12,11 @@ sq3 = np.sqrt(3)
 class StarLine(InstructionGroup):
     '''Create lines that forms the tonnetz, passing the given point only! '''
 
-    def __init__(self, point, seg_length, trans_type='p', range=3):
+    def __init__(self, point, seg_length, total_lines, trans_type='p'):
         super(StarLine, self).__init__()
         self.type = trans_type.lower()
         assert self.type in ['p', 'r', 'l']
+        self.original_pt = point
         self.cx, self.cy = point
         self.cx_last, self.cy_last = self.cx, self.cy
         self.seg = seg_length
@@ -25,7 +26,7 @@ class StarLine(InstructionGroup):
             points=(self.end1[0], self.end1[1], self.end2[0], self.end2[1]))
         self.intersect = intersect
         self.width, self.height = Window.width, Window.height
-        self.range = range
+
         self.last_cross_pt = None
         self.color = Color(1, 1, 1)
         self.color.a = 0.3
@@ -34,16 +35,36 @@ class StarLine(InstructionGroup):
         self.add(self.line)
         self.threshold = 10
 
+        if self.type == 'p':
+            self.limit = self.seg_height * (total_lines // 2)
+            self.reset_dist = self.seg_height * total_lines
+        else:
+            self.limit = self.seg * (total_lines // 2)
+            self.reset_dist = self.seg * total_lines
+            # self.cy = 0
     def update_line(self, dx, dy):
         self.cx += dx
         self.cy += dy
-        self.end1, self.end2 = self.calc_line()
-        self.line.points = (
-            self.end1[0], self.end1[1], self.end2[0], self.end2[1])
 
-    def reset_line(self, x, y):
-        self.cx = x
-        self.cy = y
+        if self.type == 'p':
+            if dy > 0 and self.cy > self.limit:
+                self.cy -= self.reset_dist
+            elif dy < 0 and self.cy < -self.limit:
+                self.cy += self.reset_dist
+        
+        else:
+            if dy > 0 and self.cy / sq3 * 2 > self.limit:
+                self.cy -= self.reset_dist / 2 * sq3
+                
+            elif dy < 0 and self.cy / sq3 * 2 < -self.limit:
+                self.cy += self.reset_dist / 2 * sq3
+
+            elif dx > 0 and self.cx > self.limit:
+                    self.cx -= self.reset_dist
+                    
+            elif dx < 0 and self.cx < -self.limit:
+                    self.cx += self.reset_dist
+
         self.end1, self.end2 = self.calc_line()
         self.line.points = (
             self.end1[0], self.end1[1], self.end2[0], self.end2[1])
@@ -61,8 +82,7 @@ class StarLine(InstructionGroup):
             if self.type == 'r':
                 end_top = [self.cx-dist_top, height]
                 end_bottom = [self.cx+dist_bottom, 0]
-            # self.type == 'l'
-            else:
+            else: # self.type == 'l'
                 end_top = [self.cx+dist_top, height]
                 end_bottom = [self.cx-dist_bottom, 0]
             return np.array(end_top), np.array(end_bottom)
@@ -89,8 +109,6 @@ class StarLine(InstructionGroup):
         # avoid duplicate crossing
 
         if self.type == 'p':
-            # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
-            # print(self.type,'trans with line',self.cx,self.cy)
             if cur_pos[1] > self.cy and last_pos[1] < self.cy:
                 if self.last_cross_pt is not None and np.linalg.norm(cur_pos-self.last_cross_pt) <= self.threshold and moving:
                     self.change_color(default=False)
@@ -101,8 +119,6 @@ class StarLine(InstructionGroup):
                     self.cx_last, self.cy_last = self.cx, self.cy
                     return True
             elif cur_pos[1] < self.cy and last_pos[1] > self.cy:
-                # print('checking!! obj last pos',last_pos,'obj cur pos',cur_pos)
-                # print(self.type,'trans with line',self.cx,self.cy)
                 if self.last_cross_pt is not None and np.linalg.norm(cur_pos-self.last_cross_pt) <= self.threshold and moving:
                     self.change_color(default=False)
                     self.cx_last, self.cy_last = self.cx, self.cy
@@ -118,20 +134,16 @@ class StarLine(InstructionGroup):
                 self.cx_last, self.cy_last = self.cx, self.cy
                 return False
         else:
-            # print('checking! obj last pos',last_pos,'obj cur pos',cur_pos,'line',self.cx,self.cy)
             if self.intersect(cur_pos, last_pos, self.end1, self.end2):
                 if self.last_cross_pt is not None and np.linalg.norm(cur_pos-self.last_cross_pt) <= self.threshold and moving:
                     self.change_color(default=False)
-                    print(self.type, 'PREVENT DUPLICATE', self.cx, self.cy)
                     return False
                 else:
                     self.last_cross_pt = cur_pos
                     self.change_color()
                     self.cx_last, self.cy_last = self.cx, self.cy
-                    print(self.type, 'crossing', self.cx, self.cy)
                     return True
             else:
-                # print(self.type,'not crossing',self.cx,self.cy)
                 self.last_cross_pt = None
                 self.change_color(default=False)
                 self.cx_last, self.cy_last = self.cx, self.cy
@@ -169,7 +181,6 @@ class Tonnetz(InstructionGroup):
         self.callback = callback
 
     def make_lines(self, p=True, rl=True):
-        # print('make lines',self.origin)
         if p:
             self.make_lines_p()
 
@@ -188,11 +199,11 @@ class Tonnetz(InstructionGroup):
 
         for i in range(int(self.num_p_p)+1):  # 7 up + 1 middle
             self.line_list_p.append(
-                StarLine((self.origin[0], self.origin[1]+self.seg_height*i), self.seg, 'p'))
+                StarLine((self.origin[0], self.origin[1]+self.seg_height*i), self.seg, self.num_p_p+self.num_p_m+1, 'p'))
 
         for i in range(1, int(self.num_p_m)+1):  # 7 down
             self.line_list_p.append(
-                StarLine((self.origin[0], self.origin[1]-self.seg_height*i), self.seg, 'p'))
+                StarLine((self.origin[0], self.origin[1]-self.seg_height*i), self.seg, self.num_p_p+self.num_p_m+1, 'p'))
 
         for line in self.line_list_p:
             self.add(line)
@@ -228,17 +239,17 @@ class Tonnetz(InstructionGroup):
 
         for i in range(int(self.num_l_p)+1):
             self.line_list_l.append(
-                StarLine((self.origin[0]+self.seg*i, self.origin[1]), self.seg, 'l'))
+                StarLine((self.origin[0]+self.seg*i, self.origin[1]), self.seg, self.num_l_p+self.num_l_m+1, 'l'))
         for i in range(1, int(self.num_l_m)+1):
             self.line_list_l.append(
-                StarLine((self.origin[0]-self.seg*i, self.origin[1]), self.seg, 'l'))
+                StarLine((self.origin[0]-self.seg*i, self.origin[1]), self.seg, self.num_l_p+self.num_l_m+1, 'l'))
 
         for i in range(int(self.num_r_p)+1):
             self.line_list_r.append(
-                StarLine((self.origin[0]+self.seg*i, self.origin[1]), self.seg, 'r'))
+                StarLine((self.origin[0]+self.seg*i, self.origin[1]), self.seg, self.num_r_p+self.num_r_m+1, 'r'))
         for i in range(1, int(self.num_r_m)+1):
             self.line_list_r.append(
-                StarLine((self.origin[0]-self.seg*i, self.origin[1]), self.seg, 'r'))
+                StarLine((self.origin[0]-self.seg*i, self.origin[1]), self.seg, self.num_r_p+self.num_r_m+1, 'r'))
 
         for line in self.line_list_r:
             self.add(line)
@@ -281,13 +292,6 @@ class Tonnetz(InstructionGroup):
             elif self.origin[0] < 0:
                 self.origin[0] += self.seg * 2
 
-            if dx > 0:
-                self.push_l(right=True)
-                self.push_r(right=True)
-            else:
-                self.push_l(right=False)
-                self.push_r(right=False)
-
         if dy:
             self.origin[1] += dy
             diffy = dy
@@ -298,15 +302,6 @@ class Tonnetz(InstructionGroup):
 
             elif self.origin[1] < 0:
                 self.origin[1] += self.seg_height * 2
-
-            if dy > 0:
-                self.push_p(up=True)
-                self.push_l(right=False)
-                self.push_r(right=True)
-            else:
-                self.push_p(up=False)
-                self.push_l(right=True)
-                self.push_r(right=False)
 
         if dx or dy:
             self.update_lines(diffx, diffy)
@@ -328,7 +323,7 @@ class Tonnetz(InstructionGroup):
             if line.cx > -self.l_limit:
                 return
 
-        line.reset_line(line.cx+dist, line.cy)
+        line.update_line(dist, 0)
 
     def push_r(self, right):
         '''make the right most line to the left most'''
@@ -347,7 +342,7 @@ class Tonnetz(InstructionGroup):
             if line.cx > -self.r_limit:
                 return
 
-        line.reset_line(line.cx+dist, line.cy)
+        line.update_line(dist, 0)
 
     def push_p(self, up):
         '''make the right most line to the left most'''
@@ -365,18 +360,13 @@ class Tonnetz(InstructionGroup):
             if line.cy > -self.p_limit:
                 return
 
-        line.reset_line(line.cx, line.cy+dist)
+        line.update_line(0, dist)
 
     def update_lines(self, diffx, diffy):
         for line in self.line_list:
             line.update_line(diffx, diffy)
 
     def on_update(self):
-        # print([line.cx for line in self.line_list_r])
-        # print()
-        # print(self.origin)
-        # for line in self.line_list:
-        #     print(line.type,line.cx,line.cy)
         pass
 
     def check_lines(self, last_pos, dx=0, dy=0):
