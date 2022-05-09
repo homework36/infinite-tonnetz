@@ -6,6 +6,8 @@ by Lu Yu, Hanwen Zhang
 
 In this project, we aim to explore “Synesthesia”: highlighting connections between music and visuals. We created a space, with both visual and musical components, which provides a smooth user experience for meditation.
 
+![](https://tva1.sinaimg.cn/large/e6c9d24egy1h21yxxi8t4g20go0d4b2c.gif)
+
 ##### Step 1: Set up for the environment
 
 1. Softwares: [Miniconda](https://docs.conda.io/en/latest/miniconda.html), [Kivy](https://kivy.org/), [NumPy](https://numpy.org/), [pyAudio](http://people.csail.mit.edu/hubert/pyaudio/), and [FluidSynth](https://www.fluidsynth.org/)

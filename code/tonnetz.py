@@ -1,11 +1,11 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
-from helper_function import *
-import numpy as np
-from kivy.graphics import Color, Line
-from kivy.graphics.instructions import InstructionGroup
-from kivy.core.window import Window
 from math import ceil
+from kivy.core.window import Window
+from kivy.graphics.instructions import InstructionGroup
+from kivy.graphics import Color, Line
+import numpy as np
+from helper_function import *
 
 
 sq3 = np.sqrt(3)
@@ -42,6 +42,7 @@ class StarLine(InstructionGroup):
             self.limit = self.seg * (total_lines // 2)
             self.reset_dist = self.seg * total_lines
             # self.cy = 0
+
     def update_line(self, dx, dy):
         self.cx += dx
         self.cy += dy
@@ -51,19 +52,19 @@ class StarLine(InstructionGroup):
                 self.cy -= self.reset_dist
             elif dy < 0 and self.cy < -self.limit:
                 self.cy += self.reset_dist
-        
+
         else:
             if dy > 0 and self.cy / sq3 * 2 > self.limit:
                 self.cy -= self.reset_dist / 2 * sq3
-                
+
             elif dy < 0 and self.cy / sq3 * 2 < -self.limit:
                 self.cy += self.reset_dist / 2 * sq3
 
             elif dx > 0 and self.cx > self.limit:
-                    self.cx -= self.reset_dist
-                    
+                self.cx -= self.reset_dist
+
             elif dx < 0 and self.cx < -self.limit:
-                    self.cx += self.reset_dist
+                self.cx += self.reset_dist
 
         self.end1, self.end2 = self.calc_line()
         self.line.points = (
@@ -82,7 +83,7 @@ class StarLine(InstructionGroup):
             if self.type == 'r':
                 end_top = [self.cx-dist_top, height]
                 end_bottom = [self.cx+dist_bottom, 0]
-            else: # self.type == 'l'
+            else:  # self.type == 'l'
                 end_top = [self.cx+dist_top, height]
                 end_bottom = [self.cx-dist_bottom, 0]
             return np.array(end_top), np.array(end_bottom)
@@ -305,62 +306,6 @@ class Tonnetz(InstructionGroup):
 
         if dx or dy:
             self.update_lines(diffx, diffy)
-
-    def push_l(self, right):
-        '''make the right most line to the left most'''
-        line_l_x = [line.cx for line in self.line_list_l]
-        self.l_limit = self.seg * (self.l_num // 2)
-        if right:
-            line_to_be_reset = np.argmax(np.array(line_l_x))
-            dist = -self.l_num * self.seg
-            line = self.line_list_l[line_to_be_reset]
-            if line.cx < self.l_limit:
-                return
-        else:
-            line_to_be_reset = np.argmin(np.array(line_l_x))
-            dist = self.l_num * self.seg
-            line = self.line_list_l[line_to_be_reset]
-            if line.cx > -self.l_limit:
-                return
-
-        line.update_line(dist, 0)
-
-    def push_r(self, right):
-        '''make the right most line to the left most'''
-        line_r_x = [line.cx for line in self.line_list_r]
-        self.r_limit = self.seg * (self.r_num // 2)
-        if right:
-            line_to_be_reset = np.argmax(np.array(line_r_x))
-            dist = -self.r_num * self.seg
-            line = self.line_list_r[line_to_be_reset]
-            if line.cx < self.r_limit:
-                return
-        else:
-            line_to_be_reset = np.argmin(np.array(line_r_x))
-            dist = self.r_num * self.seg
-            line = self.line_list_r[line_to_be_reset]
-            if line.cx > -self.r_limit:
-                return
-
-        line.update_line(dist, 0)
-
-    def push_p(self, up):
-        '''make the right most line to the left most'''
-        line_p_y = [line.cy for line in self.line_list_p]
-        if up:
-            line_to_be_reset = np.argmax(np.array(line_p_y))
-            dist = -self.p_num * self.seg_height
-            line = self.line_list_p[line_to_be_reset]
-            if line.cy < self.p_limit:
-                return
-        else:
-            line_to_be_reset = np.argmin(np.array(line_p_y))
-            dist = self.p_num * self.seg_height
-            line = self.line_list_p[line_to_be_reset]
-            if line.cy > -self.p_limit:
-                return
-
-        line.update_line(0, dist)
 
     def update_lines(self, diffx, diffy):
         for line in self.line_list:
