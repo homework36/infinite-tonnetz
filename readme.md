@@ -17,7 +17,7 @@ In this project, we aim to explore “Synesthesia”: highlighting connections b
 3. Get the app, one option is to use the following command
 
    ```bash
-   git clone [https://github.mit.edu/21m385/infinite-tonnetz](https://github.com/homework36/infinite-tonnetz.git)
+   git clone https://github.com/homework36/infinite-tonnetz.git
    cd code
    ```
 
